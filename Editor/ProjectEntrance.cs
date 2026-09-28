@@ -261,7 +261,7 @@ namespace SaintsProject.Editor
                 return DefaultGuideColor;
             }
 
-            string path = AssetDatabase.GetAssetPath((ObjectId)idObj);
+            string path = AssetDatabase.GetAssetPath((ObjectId)ConvertArg(idObj, typeof(ObjectId)));
             if (string.IsNullOrEmpty(path))
             {
                 return DefaultGuideColor;
@@ -295,7 +295,80 @@ namespace SaintsProject.Editor
                 Methods[key] = method;
             }
 
-            return method?.Invoke(target, new[] { arg });
+            if (method == null)
+            {
+                return null;
+            }
+
+            Type paramType = method.GetParameters()[0].ParameterType;
+            object converted = ConvertArg(arg, paramType);
+            return method.Invoke(target, new[] { converted });
+        }
+
+        // Different Unity versions can back the same native id parameter with different value
+        // types (plain int vs the newer EntityId struct); our own ObjectId alias is picked at
+        // compile time and can therefore disagree with what the native method actually wants
+        // at runtime. Bridge the gap generically instead of hard-coding a single version cutoff.
+        private static readonly Dictionary<(Type, Type), MethodInfo> Converters = new Dictionary<(Type, Type), MethodInfo>();
+        private static object ConvertArg(object arg, Type paramType)
+        {
+            if (arg == null || paramType.IsInstanceOfType(arg))
+            {
+                return arg;
+            }
+
+            Type argType = arg.GetType();
+            (Type argType, Type paramType) key = (argType, paramType);
+            if (!Converters.TryGetValue(key, out MethodInfo converter))
+            {
+                const BindingFlags flags = BindingFlags.Static | BindingFlags.Public;
+                // Prefer an implicit/explicit conversion operator declared on either side.
+                foreach (Type owner in new[] { paramType, argType })
+                {
+                    foreach (MethodInfo candidate in owner.GetMethods(flags))
+                    {
+                        if ((candidate.Name != "op_Implicit" && candidate.Name != "op_Explicit")
+                            || candidate.ReturnType != paramType)
+                        {
+                            continue;
+                        }
+
+                        ParameterInfo[] parameters = candidate.GetParameters();
+                        if (parameters.Length == 1 && parameters[0].ParameterType == argType)
+                        {
+                            converter = candidate;
+                            break;
+                        }
+                    }
+
+                    if (converter != null)
+                    {
+                        break;
+                    }
+                }
+
+                Converters[key] = converter;
+            }
+
+            if (converter != null)
+            {
+                return converter.Invoke(null, new[] { arg });
+            }
+
+            ConstructorInfo ctor = paramType.GetConstructor(new[] { argType });
+            if (ctor != null)
+            {
+                return ctor.Invoke(new[] { arg });
+            }
+
+            try
+            {
+                return Convert.ChangeType(arg, paramType);
+            }
+            catch (Exception)
+            {
+                return arg;
+            }
         }
 
         private static Rect FullRowRect(Rect row) => new Rect(0, row.y, row.xMax, row.height);
