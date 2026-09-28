@@ -1,0 +1,5 @@
+{
+    "name": "SaintsProject.Editor",
+    "rootNamespace": "SaintsProject",
+    "includePlatforms": ["Editor"]
+}

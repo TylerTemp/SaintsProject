@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:Template name="CloseButtonElement" src="CloseButtonElement.uxml"/>
+    <Style src="ColorPickerStyle.uss"/>
+    <ui:VisualElement name="ColorContainer" class="ColorContainer">
+        <ui:VisualElement name="CustomColorContainer">
+            <uie:ColorField name="CustomColor" tooltip="Custom Color"/>
+            <ui:VisualElement name="CustomColorIcon" picking-mode="Ignore"/>
+        </ui:VisualElement>
+        <ui:Instance template="CloseButtonElement" name="CloseButtonTemplate"/>
+    </ui:VisualElement>
+</ui:UXML>
