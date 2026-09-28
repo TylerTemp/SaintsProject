@@ -1,3 +1,7 @@
+## 0.0.2 ##
+
+Fix InstanceId/EntityId issue
+
 ## 0.0.1 ##
 
 Init Release with:
