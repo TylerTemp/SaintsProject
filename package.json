@@ -1,0 +1,19 @@
+{
+    "name": "today.comes.saintsproject",
+    "version": "0.0.1",
+    "displayName": "SaintsProject",
+    "description": "A Unity plugin for project tab customize",
+    "unity": "2022.2",
+    "dependencies": {},
+    "keywords": [
+        "unity",
+        "inspector"
+    ],
+    "category": "editor extensions",
+    "author": {
+        "name": "TylerTemp",
+        "email": "tylertempdev@gmail.com",
+        "url": "https://github.com/TylerTemp/SaintsProject"
+    },
+    "license": "MIT"
+}

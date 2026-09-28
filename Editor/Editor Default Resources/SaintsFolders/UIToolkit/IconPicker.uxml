@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="IconPickerStyle.uss"/>
+    <uie:ToolbarSearchField name="ToolbarSearchField" tooltip="Asset path, GUID, or built-in icon name" class="Search"/>
+    <ui:ScrollView name="IconContainer" style="flex-grow: 1; min-height: 0;"/>
+</ui:UXML>

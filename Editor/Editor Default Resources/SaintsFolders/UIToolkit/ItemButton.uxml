@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True">
+    <Style src="ItemButtonStyle.uss"/>
+    <ui:Button class="ItemButton"/>
+</ui:UXML>

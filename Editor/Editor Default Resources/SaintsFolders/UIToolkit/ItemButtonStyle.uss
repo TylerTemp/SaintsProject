@@ -1,0 +1,17 @@
+Button {
+    width: 20px;
+    height: 20px;
+
+    background-position-x: center;
+    background-position-y: center;
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.ItemButtonSelected {
+    background-color: rgb(38, 38, 38);
+    border-color: rgb(115, 153, 115);
+    border-width: 1px;
+}
