@@ -1,6 +1,6 @@
 {
     "name": "today.comes.saintsproject",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "displayName": "SaintsProject",
     "description": "A Unity plugin for project tab customize",
     "unity": "2022.2",
