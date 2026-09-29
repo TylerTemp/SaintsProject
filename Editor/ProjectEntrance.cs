@@ -128,7 +128,15 @@ namespace SaintsProject.Editor
 
             bool minimal = folder && !list && !grid && config.MinimalMode && corner;
             bool focused = window ? window.hasFocus : EditorWindow.focusedWindow && EditorWindow.focusedWindow.GetType().Name == "ProjectBrowser";
-            float gray = EditorGUIUtility.isProSkin ? (list || grid ? .2f : .2196f) : .76f;
+            float gray;
+            if (EditorGUIUtility.isProSkin)
+            {
+                gray = list || grid ? .2f : .2196f;
+            }
+            else
+            {
+                gray = .76f;
+            }
             Color background = new Color(gray, gray, gray);
             if (selected && !grid)
             {
@@ -153,7 +161,12 @@ namespace SaintsProject.Editor
                 // In the right pane the folder remains the main icon, even in Minimal Mode.
                 if (corner && !minimal)
                 {
-                    DrawIcon(CornerRect(iconRect), corner, Color.white);
+                    int offset = grid ? -3 : 0;
+                    Rect conorRect = CornerRect(iconRect, offset);
+                    Texture2D backdrop = Util.GetIcon("backdrop.psd");
+                    // EditorGUI.DrawTextureAlpha(conorRect, backdrop);
+                    GUI.DrawTexture(conorRect, backdrop, ScaleMode.StretchToFill, true);
+                    DrawIcon(conorRect, corner, Color.white);
                 }
             }
             else if (corner)
@@ -400,10 +413,11 @@ namespace SaintsProject.Editor
 
         private static Rect FullRowRect(Rect row) => new Rect(0, row.y, row.xMax, row.height);
 
-        private static Rect CornerRect(Rect icon)
+        private static Rect CornerRect(Rect icon, float offset)
         {
             float size = Mathf.Lerp(10, 25, Mathf.InverseLerp(16, 64, icon.width));
-            return new Rect(icon.xMax - size, icon.yMax - size, size, size);
+            // const float offset = 3;
+            return new Rect(icon.xMax - size + offset, icon.yMax - size + offset, size, size);
         }
 
         private static void DrawIcon(Rect rect, Texture icon, Color color)
