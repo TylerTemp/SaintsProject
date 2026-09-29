@@ -6,7 +6,13 @@
 
 Unity Project Tab enhancement. Use `Alt`+`Left Mouse Button` to select.
 
-Supports:
+![](https://github.com/user-attachments/assets/a1a4916b-b679-4525-8701-7e283a2a8448)
+![](https://github.com/user-attachments/assets/9ec7a0a2-7793-4593-9026-bcddf0c8edd9)
+![](https://github.com/user-attachments/assets/92d90e59-8927-48fe-9f16-87a78d13c857)
+![](https://github.com/user-attachments/assets/6677009c-0af2-42f1-9001-9a34dcc7352c)
+
+
+## Features ##
 
 1.  Indent Guild lines
 2.  Background Strip
@@ -17,3 +23,9 @@ Supports:
 7.  Split for personal/team-shared configs
 8.  Custom icon & color
 9.  Support Unity 6000+ / Disabled Domain Reload features
+
+## Usage ##
+
+1.  alt-click to change color and icon.
+2.  icon field can search built-in icons. But you can still input an image asset path for custom icons.
+3.  Tools - Saints Project to change different settings.
