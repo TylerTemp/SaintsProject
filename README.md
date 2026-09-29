@@ -16,3 +16,4 @@ Supports:
 6.  Favorite Folders/Assets
 7.  Split for personal/team-shared configs
 8.  Custom icon & color
+9.  Support Unity 6000+ / Disabled Domain Reload features

@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True">
+    <Style src="FavoriteConfigPanelStyle.uss"/>
+    <ui:ScrollView>
+        <ui:VisualElement name="favoriteConfig">
+            <ui:VisualElement name="buttons">
+                <ui:Button name="deleteButton" tooltip="Delete This Favorite" text="Delete" class="deleteButton button"/>
+                <ui:Button name="saveButton" text="Save" class="button"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="content" class="content">
+                <ui:TextField label="Alias" name="aliasInput" class="InputWithLabel"/>
+                <ui:EnumField label="Color Type" type="SaintsProject.Editor.FavoriteColorType, SaintsProject.Editor" name="colorType" class="InputWithLabel"/>
+                <SaintsProject.Editor.UIElement.ColorPickerElement/>
+                <ui:EnumField label="Icon Type" type="SaintsProject.Editor.FavoriteIconType, SaintsProject.Editor" name="iconType" class="InputWithLabel"/>
+                <SaintsProject.Editor.UIElement.IconPickerElement no-delete-button="true"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:ScrollView>
+</ui:UXML>

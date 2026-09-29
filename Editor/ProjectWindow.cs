@@ -84,8 +84,7 @@ namespace SaintsProject.Editor
                     continue;
                 }
 
-                Delegate current = OnGUIField.GetValue(host) as Delegate;
-                if (current == null)
+                if (OnGUIField.GetValue(host) is not Delegate current)
                 {
                     continue;
                 }
@@ -179,6 +178,8 @@ namespace SaintsProject.Editor
                         Position.SetValue(_window, new Rect(originalPosition.x, originalPosition.y + height, originalPosition.width, Mathf.Max(1, originalPosition.height - height)));
                         InvokeOriginal();
                     }
+
+                    Bar.DrawDragLabel();
                 }
                 finally
                 {

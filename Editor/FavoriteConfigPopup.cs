@@ -10,45 +10,69 @@ namespace SaintsProject.Editor
     public class FavoriteConfigPopup : PopupWindowContent
     {
         private AssetFavorite _favorite;
+        private static VisualTreeAsset _template;
+        private float _height = 380;
         public FavoriteConfigPopup(AssetFavorite favorite)
         {
             _favorite = favorite;
         }
 
-        public override Vector2 GetWindowSize() => new Vector2(280, 380);
+        public override Vector2 GetWindowSize() => new Vector2(200, _height);
         public override void OnGUI(Rect rect)
         {
         }
 
         public override void OnOpen()
         {
-            VisualElement root = editorWindow.rootVisualElement;
-            TextField alias = new TextField("Alias")
+            if (!_template)
             {
-                value = _favorite.alias ?? "",
-            };
-            root.Add(alias);
-            EnumField iconType = new EnumField("Icon", _favorite.iconType);
-            root.Add(iconType);
-            IconPickerElement icons = new IconPickerElement(_favorite.icon)
-            {
-                style =
-                {
-                    flexGrow = 1,
-                    minHeight = 0,
-                },
-            };
-            root.Add(icons);
-            EnumField colorType = new EnumField("Color", _favorite.colorType);
-            root.Add(colorType);
-            ColorPickerElement colors = new ColorPickerElement();
-            colors.SetValueWithoutNotify(new ColorPickerResult(true, true, _favorite.color));
-            root.Add(colors);
+                _template = Util.LoadResource<VisualTreeAsset>("UIToolkit/FavoriteConfig.uxml");
+            }
+            TemplateContainer template = _template.CloneTree();
+            VisualElement root = template.Q<VisualElement>("favoriteConfig");
+            TextField alias = root.Q<TextField>("aliasInput");
+            alias.SetValueWithoutNotify(_favorite.alias ?? "");
+            EnumField colorType = root.Q<EnumField>("colorType");
+            colorType.Init(_favorite.colorType);
+            ColorPickerElement colors = root.Q<ColorPickerElement>();
+            colors.NoDeleteButton();
+            colors.SetValueWithoutNotify(new ColorPickerResult(true, false, _favorite.color));
+            EnumField iconType = root.Q<EnumField>("iconType");
+            iconType.Init(_favorite.iconType);
+            IconPickerElement icons = root.Q<IconPickerElement>();
+            icons.SetValueWithoutNotify(_favorite.icon);
 
             iconType.RegisterValueChangedCallback(_ => RefreshFields());
             colorType.RegisterValueChangedCallback(_ => RefreshFields());
             RefreshFields();
-            root.Add(new Button(() =>
+            root.Q<Button>("deleteButton").clicked += () =>
+            {
+                ProjectConfigStore.RemoveFavorite(_favorite);
+                editorWindow.Close();
+            };
+            root.Q<Button>("saveButton").clicked += Save;
+            alias.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+                {
+                    Save();
+                    evt.StopPropagation();
+                }
+            }, TrickleDown.TrickleDown);
+            root.RegisterCallback<AttachToPanelEvent>(_ => alias.Focus());
+            root.RegisterCallback<GeometryChangedEvent>(_ =>
+            {
+                float height = root.resolvedStyle.height;
+                if (!float.IsNaN(height) && height > 0 && !Mathf.Approximately(_height, height))
+                {
+                    _height = height;
+                    editorWindow.Repaint();
+                }
+            });
+            editorWindow.rootVisualElement.Add(template);
+            return;
+
+            void Save()
             {
                 _favorite.alias = alias.value;
                 _favorite.iconType = (FavoriteIconType)iconType.value;
@@ -62,19 +86,7 @@ namespace SaintsProject.Editor
                 _favorite.color = colors.value.Color;
                 ProjectConfigStore.SetFavorite(_favorite);
                 editorWindow.Close();
-            })
-            {
-                text = "Save",
-            });
-            root.Add(new Button(() =>
-            {
-                ProjectConfigStore.RemoveFavorite(_favorite);
-                editorWindow.Close();
-            })
-            {
-                text = "Remove Favorite",
-            });
-            return;
+            }
 
             void RefreshFields()
             {

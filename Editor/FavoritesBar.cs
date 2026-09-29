@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SaintsProject.Editor.Config;
 using SaintsProject.Editor.Utils;
 using UnityEditor;
@@ -12,16 +13,33 @@ namespace SaintsProject.Editor
     {
         private readonly List<AssetFavorite> _favorites = new List<AssetFavorite>();
         private readonly List<Object> _objects = new List<Object>();
-        private readonly List<Rect> _rects = new List<Rect>();
-        private readonly List<GUIContent> _labels = new List<GUIContent>();
-        private readonly List<Texture> _icons = new List<Texture>();
+        private readonly List<Object> _dragAssets = new List<Object>();
         private IConfig _source;
         private bool _dirty = true;
-        private Vector2 _scroll;
         private int _pressed = -1;
         private Vector2 _pressPosition;
         private bool _dragging;
         private int _dropIndex = -1;
+        private float _height = 24;
+
+        // Keep the preview model and ordering flow aligned with SaintsHierarchy Legacy.
+        private enum RuntimeFavoriteStatus
+        {
+            Default,
+            DragExisted,
+            DragNew,
+        }
+
+        private sealed class FavoriteDrawingInfo
+        {
+            public int SavedIndex;
+            public AssetFavorite Favorite;
+            public Object Asset;
+            public RuntimeFavoriteStatus Status;
+            public GUIContent Content;
+            public Texture Icon;
+            public Rect Rect;
+        }
         public void Invalidate() => _dirty = true;
         private void Refresh()
         {
@@ -35,6 +53,7 @@ namespace SaintsProject.Editor
             _pressed = -1;
             _dragging = false;
             _dropIndex = -1;
+            _dragAssets.Clear();
             _favorites.Clear();
             _objects.Clear();
             _favorites.AddRange(_source.Favorites);
@@ -48,17 +67,36 @@ namespace SaintsProject.Editor
         {
             Refresh();
             Event evt = Event.current;
-            if (evt.rawType == EventType.MouseMove || evt.rawType == EventType.MouseDown || evt.rawType == EventType.MouseUp || evt.rawType == EventType.DragUpdated || evt.rawType == EventType.DragExited)
+            if (evt.rawType == EventType.MouseMove || evt.rawType == EventType.MouseDown || evt.rawType == EventType.MouseUp || evt.rawType == EventType.DragUpdated || evt.rawType == EventType.DragPerform || evt.rawType == EventType.DragExited)
             {
                 EditorWindow.mouseOverWindow?.Repaint();
             }
 
             const float rowHeight = 22;
             float available = Mathf.Max(40, width - 24);
-            float x = 2, y = 2;
-            _rects.Clear();
-            _labels.Clear();
-            _icons.Clear();
+            Rect area = new Rect(0, 0, available, _height);
+            if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
+            {
+                _dragAssets.Clear();
+                if (area.Contains(evt.mousePosition))
+                {
+                    foreach (Object asset in DragAndDrop.objectReferences)
+                    {
+                        if (asset && EditorUtility.IsPersistent(asset)
+                            && !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(asset)) && !_dragAssets.Contains(asset))
+                        {
+                            _dragAssets.Add(asset);
+                        }
+                    }
+                }
+            }
+            else if (evt.type == EventType.DragExited || evt.rawType == EventType.MouseUp)
+            {
+                _dragAssets.Clear();
+            }
+
+            List<FavoriteDrawingInfo> existsDrawingInfos = new List<FavoriteDrawingInfo>();
+            Dictionary<Object, FavoriteDrawingInfo> existedDragging = new Dictionary<Object, FavoriteDrawingInfo>();
             for (int i = 0; i < _favorites.Count; i++)
             {
                 AssetFavorite favorite = _favorites[i];
@@ -92,34 +130,123 @@ namespace SaintsProject.Editor
                 string label = string.IsNullOrEmpty(favorite.alias) ? (asset ? asset.name : "Missing Asset") : favorite.alias;
                 GUIContent content = new GUIContent(label, asset ? AssetDatabase.GetAssetPath(asset) : favorite.guid);
                 float itemWidth = Mathf.Min(available - 16, GUI.skin.button.CalcSize(content).x + (icon ? 18 : 0) + 8);
-                if (x > 2 && x + itemWidth > available - 16)
+                FavoriteDrawingInfo info = new FavoriteDrawingInfo
                 {
-                    x = 2;
-                    y += rowHeight;
+                    SavedIndex = i,
+                    Favorite = favorite,
+                    Asset = asset,
+                    Status = RuntimeFavoriteStatus.Default,
+                    Content = content,
+                    Icon = icon,
+                    Rect = new Rect(0, 0, itemWidth, rowHeight - 2),
+                };
+                if (asset && _dragAssets.Contains(asset))
+                {
+                    existedDragging[asset] = info;
+                    continue;
                 }
 
-                _rects.Add(new Rect(x, y, itemWidth, rowHeight - 2));
-                _labels.Add(content);
-                _icons.Add(icon);
-                x += itemWidth + 2;
+                existsDrawingInfos.Add(info);
             }
 
-            float contentHeight = y + rowHeight;
-            float height = Mathf.Clamp(contentHeight, rowHeight + 2, Mathf.Max(rowHeight + 2, maxHeight));
-            Rect area = new Rect(0, 0, available, height);
-            _scroll = GUI.BeginScrollView(area, _scroll, new Rect(0, 0, available - 16, contentHeight), false, contentHeight > height);
-            for (int i = 0; i < _favorites.Count; i++)
+            List<FavoriteDrawingInfo> draggingDrawingInfos = new List<FavoriteDrawingInfo>();
+            foreach (Object asset in _dragAssets)
             {
-                Rect rect = _rects[i];
-                AssetFavorite favorite = _favorites[i];
-                Object asset = _objects[i];
+                bool exists = existedDragging.TryGetValue(asset, out FavoriteDrawingInfo info);
+                if (!exists)
+                {
+                    string path = AssetDatabase.GetAssetPath(asset);
+                    Texture icon = Util.GetIcon(ProjectConfigStore.Resolve(path).icon);
+                    if (!icon)
+                    {
+                        icon = AssetDatabase.GetCachedIcon(path);
+                    }
+
+                    GUIContent content = new GUIContent(asset.name, path);
+                    float itemWidth = Mathf.Min(available - 16, GUI.skin.button.CalcSize(content).x + (icon ? 18 : 0) + 8);
+                    info = new FavoriteDrawingInfo
+                    {
+                        SavedIndex = -1,
+                        Asset = asset,
+                        Content = content,
+                        Icon = icon,
+                        Rect = new Rect(0, 0, itemWidth, rowHeight - 2),
+                    };
+                }
+
+                info.Status = exists ? RuntimeFavoriteStatus.DragExisted : RuntimeFavoriteStatus.DragNew;
+                draggingDrawingInfos.Add(info);
+            }
+
+            CalcRelativePos(existsDrawingInfos.Concat(draggingDrawingInfos), available, rowHeight);
+            _dropIndex = -1;
+            List<FavoriteDrawingInfo> favoriteDrawingInfos;
+            if (draggingDrawingInfos.Count > 0)
+            {
+                Vector2 mousePos = evt.mousePosition;
+                favoriteDrawingInfos = new List<FavoriteDrawingInfo>(existsDrawingInfos.Count + draggingDrawingInfos.Count);
+                bool inserted = false;
+                foreach (FavoriteDrawingInfo favoriteDrawingInfo in existsDrawingInfos)
+                {
+                    Rect useRect = favoriteDrawingInfo.Rect;
+                    if (!inserted && useRect.Contains(mousePos))
+                    {
+                        bool isPre = Mathf.InverseLerp(useRect.x, useRect.xMax, mousePos.x) < .4f;
+                        if (isPre)
+                        {
+                            favoriteDrawingInfos.AddRange(draggingDrawingInfos);
+                            favoriteDrawingInfos.Add(favoriteDrawingInfo);
+                        }
+                        else
+                        {
+                            favoriteDrawingInfos.Add(favoriteDrawingInfo);
+                            favoriteDrawingInfos.AddRange(draggingDrawingInfos);
+                        }
+
+                        // AddFavorites accepts an index in the saved list, before removing dragged entries.
+                        _dropIndex = favoriteDrawingInfo.SavedIndex + (isPre ? 0 : 1);
+                        inserted = true;
+                    }
+                    else
+                    {
+                        favoriteDrawingInfos.Add(favoriteDrawingInfo);
+                    }
+                }
+
+                if (!inserted)
+                {
+                    favoriteDrawingInfos.AddRange(draggingDrawingInfos);
+                    _dropIndex = _favorites.Count;
+                }
+            }
+            else
+            {
+                favoriteDrawingInfos = existsDrawingInfos;
+            }
+
+            float contentHeight = CalcRelativePos(favoriteDrawingInfos, available, rowHeight);
+            // Match SaintsHierarchy: wrap favorites into rows and let the toolbar grow to fit them.
+            float height = Mathf.Max(rowHeight + 2, contentHeight);
+            _height = height;
+            area.height = height;
+            foreach (FavoriteDrawingInfo favoriteDrawingInfo in favoriteDrawingInfos)
+            {
+                int i = favoriteDrawingInfo.SavedIndex;
+                Rect rect = favoriteDrawingInfo.Rect;
+                AssetFavorite favorite = favoriteDrawingInfo.Favorite;
+                Object asset = favoriteDrawingInfo.Asset;
+                bool placeholder = favoriteDrawingInfo.Status != RuntimeFavoriteStatus.Default;
                 bool hover = rect.Contains(evt.mousePosition);
                 if (evt.type == EventType.Repaint)
                 {
                     Color old = GUI.backgroundColor;
                     AssetConfig appearance = asset ? ProjectConfigStore.Resolve(AssetDatabase.GetAssetPath(asset)) : default;
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (favorite.colorType == FavoriteColorType.CustomColor)
+                    if (placeholder)
+                    {
+                        GUI.backgroundColor = favoriteDrawingInfo.Status == RuntimeFavoriteStatus.DragExisted ? Color.cyan : Color.green;
+                    }
+                    else if (favorite.colorType == FavoriteColorType.CustomColor)
                     {
                         GUI.backgroundColor = favorite.color;
                     }
@@ -128,16 +255,21 @@ namespace SaintsProject.Editor
                         GUI.backgroundColor = appearance.color;
                     }
 
-                    GUI.skin.button.Draw(rect, GUIContent.none, hover, _pressed == i, false, false);
+                    GUI.skin.button.Draw(rect, GUIContent.none, hover, !placeholder && _pressed == i, false, false);
                     GUI.backgroundColor = old;
                     Rect labelRect = new Rect(rect.x + 4, rect.y, rect.width - 8, rect.height);
-                    if (_icons[i])
+                    if (favoriteDrawingInfo.Icon)
                     {
-                        GUI.DrawTexture(new Rect(labelRect.x, rect.y + 2, 16, 16), _icons[i], ScaleMode.ScaleToFit, true);
+                        GUI.DrawTexture(new Rect(labelRect.x, rect.y + 2, 16, 16), favoriteDrawingInfo.Icon, ScaleMode.ScaleToFit, true);
                         labelRect.xMin += 18;
                     }
 
-                    GUI.Label(labelRect, _labels[i], EditorStyles.label);
+                    GUI.Label(labelRect, favoriteDrawingInfo.Content, EditorStyles.label);
+                }
+
+                if (placeholder)
+                {
+                    continue;
                 }
 
                 if (hover && (evt.type == EventType.ContextClick || (evt.type == EventType.MouseDown && evt.button == 0 && evt.alt)))
@@ -187,52 +319,22 @@ namespace SaintsProject.Editor
                 }
             }
 
-            // if (_favorites.Count == 0)
-            // {
-            //     GUI.Label(new Rect(4, 2, available, rowHeight), "Drag assets here to add favorites", EditorStyles.miniLabel);
-            // }
-
-            // Mouse coordinates are local to the scroll view here.
             if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
             {
-                _dropIndex = -1;
-                Rect visible = new Rect(_scroll.x, _scroll.y, area.width, area.height);
-                if (visible.Contains(evt.mousePosition))
+                if (_dragAssets.Count > 0)
                 {
-                    List<Object> assets = new List<Object>();
-                    foreach (Object asset in DragAndDrop.objectReferences)
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                    if (evt.type == EventType.DragPerform)
                     {
-                        if (asset && EditorUtility.IsPersistent(asset) && !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(asset)))
-                        {
-                            assets.Add(asset);
-                        }
+                        DragAndDrop.AcceptDrag();
+                        ProjectConfigStore.AddFavorites(_dragAssets, _dropIndex);
+                        _dragAssets.Clear();
+                        _pressed = -1;
+                        _dragging = false;
+                        _dropIndex = -1;
                     }
 
-                    if (assets.Count > 0)
-                    {
-                        DragAndDrop.visualMode = DragAndDropVisualMode.Link;
-                        int insertion = _favorites.Count;
-                        for (int i = 0; i < _rects.Count; i++)
-                        {
-                            if (evt.mousePosition.y < _rects[i].yMin || (evt.mousePosition.y < _rects[i].yMax && evt.mousePosition.x < _rects[i].center.x))
-                            {
-                                insertion = i;
-                                break;
-                            }
-                        }
-
-                        _dropIndex = insertion;
-                        if (evt.type == EventType.DragPerform)
-                        {
-                            DragAndDrop.AcceptDrag();
-                            ProjectConfigStore.AddFavorites(assets, insertion);
-                            _pressed = -1;
-                            _dragging = false;
-                            _dropIndex = -1;
-                        }
-
-                        evt.Use();
-                    }
+                    evt.Use();
                 }
             }
 
@@ -243,31 +345,41 @@ namespace SaintsProject.Editor
                 _dropIndex = -1;
             }
 
-            if (evt.type == EventType.Repaint && _dropIndex >= 0)
-            {
-                Rect marker;
-                if (_dropIndex < _rects.Count)
-                {
-                    marker = _rects[_dropIndex];
-                }
-                else
-                {
-                    marker = _rects.Count > 0 ? _rects[^1] : new Rect(2, 2, 0, rowHeight - 2);
-                }
-
-                float markerX = _dropIndex < _rects.Count
-                    ? marker.xMin - 1
-                    : marker.xMax + 1;
-                EditorGUI.DrawRect(new Rect(markerX, marker.y, 2, marker.height), new Color(.3f, .65f, 1f));
-            }
-
-            GUI.EndScrollView();
             if (evt.type == EventType.Repaint)
             {
-                GUI.DrawTexture(new Rect(width - 20, 4, 16, 16), Util.GetIcon("fav.png"), ScaleMode.ScaleToFit, true);
+                GUI.DrawTexture(new Rect(width - 16, 0, 16, 16), Util.GetIcon("fav.png"), ScaleMode.ScaleToFit, true);
             }
 
             return height;
         }
+
+        public void DrawDragLabel()
+        {
+            if (Event.current.type == EventType.Repaint && _dragAssets.Count > 0)
+            {
+                GUIContent content = new GUIContent(string.Join("\n", _dragAssets.ConvertAll(asset => asset.name)));
+                Vector2 size = GUI.skin.label.CalcSize(content);
+                GUI.Label(new Rect(Event.current.mousePosition + new Vector2(10, 10), size), content);
+            }
+        }
+
+        private static float CalcRelativePos(IEnumerable<FavoriteDrawingInfo> infos, float available, float rowHeight)
+        {
+            float x = 2, y = 2;
+            foreach (FavoriteDrawingInfo info in infos)
+            {
+                if (x > 2 && x + info.Rect.width > available - 16)
+                {
+                    x = 2;
+                    y += rowHeight;
+                }
+
+                info.Rect.position = new Vector2(x, y);
+                x += info.Rect.width + 2;
+            }
+
+            return y + rowHeight;
+        }
+
     }
 }
