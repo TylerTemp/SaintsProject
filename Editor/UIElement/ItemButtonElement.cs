@@ -18,7 +18,10 @@ namespace SaintsProject.Editor.UIElement
         public readonly Button Button;
         public ItemButtonElement()
         {
-            _template ??= Util.LoadResource<VisualTreeAsset>("UIToolkit/ItemButton.uxml");
+            if (!_template)
+            {
+                _template = Util.LoadResource<VisualTreeAsset>("UIToolkit/ItemButton.uxml");
+            }
             TemplateContainer root = _template.CloneTree();
             Add(root);
             Button = root.Q<Button>();

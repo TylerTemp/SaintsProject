@@ -22,6 +22,20 @@ namespace SaintsProject.Editor
         {
             EditorApplication.projectChanged += Invalidate;
             Undo.undoRedoPerformed += OnUndoRedo;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state != PlayModeStateChange.EnteredPlayMode && state != PlayModeStateChange.EnteredEditMode)
+            {
+                return;
+            }
+
+            // Editor subscriptions survive when domain reload is disabled, but cached
+            // asset references and configuration values can change across Play mode.
+            FolderContents.Invalidate();
+            Invalidate();
         }
 
         private static void Invalidate()

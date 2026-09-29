@@ -38,7 +38,24 @@ namespace SaintsProject.Editor.UIElement
 #if UNITY_6000_0_OR_NEWER
         [UxmlAttribute]
 #endif
-        public bool NoDeleteButton;
+        public bool NoDeleteButton
+        {
+            get => _noDeleteButton;
+            set
+            {
+                if (_noDeleteButton == value)
+                {
+                    return;
+                }
+
+                _noDeleteButton = value;
+                if (_iconRow != null)
+                {
+                    RefreshIconRows();
+                }
+            }
+        }
+        private bool _noDeleteButton;
         private static Texture2D _closeIcon;
         private static VisualTreeAsset _iconPickerTemplate;
         public readonly ToolbarSearchField Search;
@@ -52,7 +69,10 @@ namespace SaintsProject.Editor.UIElement
         // ReSharper disable once MemberCanBePrivate.Global
         public IconPickerElement(string curIcon)
         {
-            _iconPickerTemplate ??= Util.LoadResource<VisualTreeAsset>("UIToolkit/IconPicker.uxml");
+            if (!_iconPickerTemplate)
+            {
+                _iconPickerTemplate = Util.LoadResource<VisualTreeAsset>("UIToolkit/IconPicker.uxml");
+            }
             TemplateContainer root = _iconPickerTemplate.CloneTree();
             style.flexGrow = 1;
             style.minHeight = 0;
@@ -77,7 +97,7 @@ namespace SaintsProject.Editor.UIElement
             ItemButtonElement customButton = MakeIconButton(null);
             _iconRow.Add(customButton);
             customButton.Button.tooltip = "Current Custom Icon";
-            customButton.Button.clicked += () => value = "";
+            customButton.Button.clicked += ClearIcon;
             IReadOnlyList<string> presetIcons;
             if (string.IsNullOrWhiteSpace(Search.value))
             {
@@ -122,9 +142,13 @@ namespace SaintsProject.Editor.UIElement
 
             if (!string.IsNullOrEmpty(_curIcon) && !NoDeleteButton) // has icon
             {
-                ItemButtonElement noIconButton = MakeIconButton(_closeIcon ??= Util.LoadResource<Texture2D>("close.png"));
+                if (!_closeIcon)
+                {
+                    _closeIcon = Util.LoadResource<Texture2D>("close.png");
+                }
+                ItemButtonElement noIconButton = MakeIconButton(_closeIcon);
                 noIconButton.Button.tooltip = "Delete Icon Config";
-                noIconButton.Button.clicked += () => value = "";
+                noIconButton.Button.clicked += ClearIcon;
                 _iconRow.Add(noIconButton);
             }
 
@@ -141,7 +165,7 @@ namespace SaintsProject.Editor.UIElement
                 if (isCurrent)
                 {
                     btn.SetSelected(true);
-                    btn.Button.clicked += () => value = "";
+                    btn.Button.clicked += ClearIcon;
                 }
                 else
                 {
@@ -150,6 +174,14 @@ namespace SaintsProject.Editor.UIElement
 
                 btn.Button.tooltip = iconPath;
                 _iconRow.Add(btn);
+            }
+        }
+
+        private void ClearIcon()
+        {
+            if (!NoDeleteButton)
+            {
+                value = "";
             }
         }
 

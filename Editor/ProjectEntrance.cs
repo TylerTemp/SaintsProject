@@ -86,6 +86,7 @@ namespace SaintsProject.Editor
             AssetConfig appearance = ProjectConfigStore.Resolve(path);
             bool grid = rect.height > 20;
             bool folder = AssetDatabase.IsValidFolder(path);
+            bool foldable = folder && AssetDatabase.GetSubFolders(path).Length > 0;
             EditorWindow window = ProjectWindow.Current;
             bool twoColumns = window && Convert.ToInt32(Member(window, "m_ViewMode") ?? 0) == 1;
             bool list = twoColumns && (grid || !folder || Mathf.Approximately(rect.x, 14));
@@ -108,14 +109,23 @@ namespace SaintsProject.Editor
                 return;
             }
 
-            FolderContents.Summary contents = folder && (config.AutoIcons || config.ContentMinimap) ? FolderContents.Get(path) : null;
-            string iconName = appearance.icon;
-            if (string.IsNullOrEmpty(iconName) && config.AutoIcons && contents != null)
+            FolderContents.Summary contents = folder && (config.AutoIcons || config.ContentMinimap)
+                ? FolderContents.Get(path)
+                : null;
+
+            Texture corner = null;
+            if (string.IsNullOrEmpty(appearance.icon))
             {
-                iconName = contents.AutoIcon;
+                if (config.AutoIcons && contents != null)
+                {
+                    corner = contents.AutoIcon;
+                }
+            }
+            else
+            {
+                corner = Util.LoadResource<Texture2D>(appearance.icon);
             }
 
-            Texture corner = Util.GetIcon(iconName);
             bool minimal = folder && !list && !grid && config.MinimalMode && corner;
             bool focused = window ? window.hasFocus : EditorWindow.focusedWindow && EditorWindow.focusedWindow.GetType().Name == "ProjectBrowser";
             float gray = EditorGUIUtility.isProSkin ? (list || grid ? .2f : .2196f) : .76f;
@@ -176,7 +186,7 @@ namespace SaintsProject.Editor
 
             if (config.IndentGuides && !grid && !list)
             {
-                DrawIndentGuides(rect, id, window, twoColumns);
+                DrawIndentGuides(rect, id, window, twoColumns, foldable);
             }
         }
 
@@ -185,7 +195,7 @@ namespace SaintsProject.Editor
         private const float IndentBase = 16f;
         private static readonly Dictionary<(Type, string), MethodInfo> Methods = new Dictionary<(Type, string), MethodInfo>();
 
-        private static void DrawIndentGuides(Rect rect, ObjectId id, EditorWindow window, bool twoColumns)
+        private static void DrawIndentGuides(Rect rect, ObjectId id, EditorWindow window, bool twoColumns, bool foldable)
         {
             int depth = Mathf.RoundToInt((rect.x - IndentBase) / IndentStep);
             if (depth <= 0 || window == null)
@@ -217,14 +227,15 @@ namespace SaintsProject.Editor
                     // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (hasNext)
                     {
-                        EditorGUI.DrawRect(new Rect(x, rect.y, 1, rect.height), color);
+                        DrawGuideLine(rect, x, color, foldable, rect.height);
                     }
                     else
                     {
-                        EditorGUI.DrawRect(new Rect(x, rect.y, 1, rect.height / 2f), color);
+                        DrawGuideLine(rect, x, color, foldable, rect.height / 2f);
                     }
 
-                    EditorGUI.DrawRect(new Rect(x, rect.y + rect.height / 2f - 0.5f, IndentStep / 2f + 1f, 1), color);
+                    float horizontalLength = foldable ? rect.x - 6f - x : IndentStep / 2f + 1f;
+                    EditorGUI.DrawRect(new Rect(x, rect.y + rect.height / 2f - 0.5f, horizontalLength, 1), color);
                 }
                 else if (hasNext)
                 {
@@ -233,6 +244,22 @@ namespace SaintsProject.Editor
 
                 node = parent;
             }
+        }
+
+        private static void DrawGuideLine(Rect rect, float x, Color color, bool foldable, float lineHeight)
+        {
+            if (!foldable)
+            {
+                EditorGUI.DrawRect(new Rect(x, rect.y, 1, lineHeight), color);
+                return;
+            }
+
+            const float foldoutIconSize = 12f;
+            float iconTop = rect.y + (rect.height - foldoutIconSize) / 2f;
+            float iconBottom = iconTop + foldoutIconSize;
+            EditorGUI.DrawRect(new Rect(x, rect.y, 1, Mathf.Max(0, iconTop - rect.y)), color);
+            float lineBottom = Mathf.Min(rect.y + lineHeight, rect.yMax);
+            EditorGUI.DrawRect(new Rect(x, iconBottom, 1, Mathf.Max(0, lineBottom - iconBottom)), color);
         }
 
         private static bool HasNextSibling(object node)
@@ -407,7 +434,11 @@ namespace SaintsProject.Editor
             float x = right - count * 13;
             for (int i = 0; i < count; i++)
             {
-                DrawIcon(new Rect(x, row.y + (row.height - 12) / 2, 12, 12), Util.GetIcon(contents.Icons[i]), new Color(1, 1, 1, EditorGUIUtility.isProSkin ? .5f : .7f));
+                DrawIcon(
+                    new Rect(x, row.y + (row.height - 12) / 2, 12, 12),
+                    contents.Icons[i],
+                    new Color(1, 1, 1, EditorGUIUtility.isProSkin ? .5f : .7f)
+                );
                 x += 13;
             }
         }

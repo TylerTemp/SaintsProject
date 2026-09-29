@@ -1,8 +1,14 @@
+#if (SAINTSPROJECT_WWISE || WWISE_2024_OR_LATER || WWISE_2023_OR_LATER || WWISE_2022_OR_LATER || WWISE_2021_OR_LATER || WWISE_2020_OR_LATER || WWISE_2019_OR_LATER) && !SAINTSPROJECT_WWISE_DISABLE
+#define USE_WWISE
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SaintsProject.Editor.Utils;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace SaintsProject.Editor
 {
@@ -10,10 +16,10 @@ namespace SaintsProject.Editor
     [InitializeOnLoad]
     internal static class FolderContents
     {
-        internal sealed class Summary
+        internal class Summary
         {
-            public string AutoIcon = "";
-            public readonly List<string> Icons = new List<string>();
+            public Texture2D AutoIcon;
+            public readonly List<Texture2D> Icons = new List<Texture2D>();
         }
 
         private static readonly Dictionary<string, List<string>> Children = new Dictionary<string, List<string>>(StringComparer.Ordinal);
@@ -112,8 +118,11 @@ namespace SaintsProject.Editor
                 return result;
             }
 
-            string common = null;
+            Texture2D common = null;
             bool mixed = false;
+            bool containsSpineSkeletonData = false;
+            bool containsSpineAtlas = false;
+
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (string path in files)
             {
@@ -128,7 +137,19 @@ namespace SaintsProject.Editor
                     continue;
                 }
 
-                string icon = IconName(type, path);
+#if SAINTSPROJECT_SPINE_UNITY
+                if (typeof(Spine.Unity.SkeletonDataAsset).IsAssignableFrom(type))
+                {
+                    containsSpineSkeletonData = true;
+                }
+
+                if (typeof(Spine.Unity.SpineAtlasAsset).IsAssignableFrom(type))
+                {
+                    containsSpineAtlas = true;
+                }
+#endif
+
+                Texture2D icon = GetTypeIcon(type, path);
                 if (common == null)
                 {
                     common = icon;
@@ -138,77 +159,122 @@ namespace SaintsProject.Editor
                     mixed = true;
                 }
 
-                if (!string.IsNullOrEmpty(icon) && !result.Icons.Contains(icon))
+                if (icon != null && !result.Icons.Contains(icon))
                 {
                     result.Icons.Add(icon);
                 }
             }
 
-            if (!mixed)
+            if (mixed)
             {
-                result.AutoIcon = common ?? "";
+#if SAINTSPROJECT_SPINE_UNITY
+                if (containsSpineAtlas && containsSpineSkeletonData)
+                {
+                    result.AutoIcon = AssetPreview.GetMiniTypeThumbnail(typeof(Spine.Unity.SkeletonDataAsset));
+                }
+#endif
+            }
+            else
+            {
+                result.AutoIcon = common;
             }
 
-            if (result.Icons.Contains(CsScriptIcon) || result.Icons.Contains(CsScriptIconOld))
+            foreach (Texture2D texture2D in result.Icons.ToArray())
             {
-                result.Icons.Remove("AssemblyDefinitionAsset Icon");
-                result.Icons.Remove("d_AssemblyDefinitionAsset Icon");
+                if (texture2D.name.Contains(CsScriptIcon) || texture2D.name.Contains(CsScriptIconOld))
+                {
+                    result.Icons.RemoveAll(each =>
+                        each.name is "AssemblyDefinitionAsset Icon" or "d_AssemblyDefinitionAsset Icon");
+                }
+
+                if (texture2D.name.Contains(ShaderIcon) || texture2D.name.Contains(ShaderIconOld))
+                {
+                    result.Icons.RemoveAll(each =>
+                        each.name is "ShaderInclude Icon" or "d_ShaderInclude Icon");
+                }
             }
 
-            if (result.Icons.Contains(ShaderIcon) || result.Icons.Contains(ShaderIconOld))
-            {
-                result.Icons.Remove("ShaderInclude Icon");
-                result.Icons.Remove("d_ShaderInclude Icon");
-            }
 
             result.Icons.Sort((a, b) =>
             {
-                int ai = Array.IndexOf(Order, a);
-                int bi = Array.IndexOf(Order, b);
+                int ai = Array.IndexOf(Order, a.name);
+                int bi = Array.IndexOf(Order, b.name);
                 ai = ai < 0 ? Order.Length : ai;
                 bi = bi < 0 ? Order.Length : bi;
-                return ai == bi ? string.CompareOrdinal(a, b) : ai.CompareTo(bi);
+                return ai == bi ? string.CompareOrdinal(a.name, b.name) : ai.CompareTo(bi);
             });
             return result;
         }
 
-        private static string IconName(Type type, string path)
+        private static Texture2D GetTypeIcon(Type type, string path)
         {
             if (typeof(Texture).IsAssignableFrom(type))
             {
-                return TextureIcon;
+                return Util.LoadIconContent(TextureIcon);
             }
 
             if (type == typeof(GameObject))
             {
-                return PrefabIcon;
+                return Util.LoadIconContent(PrefabIcon);
             }
 
             string extension = Path.GetExtension(path);
             if (type == typeof(MonoScript) || extension == ".asmdef" || extension == ".asmref")
             {
-                return CsScriptIcon;
+                return Util.LoadIconContent(CsScriptIcon);
+            }
+
+            if (type == typeof(VisualTreeAsset) || extension == ".uxml")
+            {
+                return Util.LoadIconContent("d_VisualTreeAsset Icon");
+            }
+            if (type == typeof(StyleSheet) || extension == ".uss")
+            {
+                return Util.LoadIconContent("d_StyleSheet Icon");
+            }
+
+#if USE_WWISE
+            if (type == typeof(WwiseEventReference))
+            {
+                return Util.LoadResource<Texture2D>("Wwise/event_nor.png");
+            }
+            if (type == typeof(WwiseRtpcReference))
+            {
+                return Util.LoadResource<Texture2D>("Wwise/gameparameter_nor.png");
+            }
+            if (type == typeof(WwiseBankReference))
+            {
+                return Util.LoadResource<Texture2D>("Wwise/soundbank_nor.png");
+            }
+            if (type == typeof(WwiseSwitchReference))
+            {
+                return Util.LoadResource<Texture2D>("Wwise/switch_nor.png");
+            }
+            if (type == typeof(WwiseSwitchGroupReference))
+            {
+                return Util.LoadResource<Texture2D>("Wwise/switchgroup_nor.png");
+            }
+#endif
+
+            Texture2D icon = AssetPreview.GetMiniTypeThumbnail(type);
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (icon)
+            {
+                return icon;
             }
 
             if (typeof(ScriptableObject).IsAssignableFrom(type))
             {
-                return ScriptableObjectIcon;
+                return Util.LoadIconContent(ScriptableObjectIcon);
             }
 
             if (type == typeof(DefaultAsset) || type == typeof(TextAsset))
             {
-                return "";
-            }
-
-            Texture2D icon = AssetPreview.GetMiniTypeThumbnail(type);
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!icon)
-            {
-                return "";
+                return null;
             }
 
             // return icon.name.StartsWith("d_", StringComparison.Ordinal) ? icon.name.Substring(2) : icon.name;
-            return icon.name;
+            return null;
         }
     }
 }

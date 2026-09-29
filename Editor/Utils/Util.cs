@@ -31,7 +31,14 @@ namespace SaintsProject.Editor.Utils
 
             if (typeof(T) == typeof(Texture2D) && Icons.TryGetValue(path, out Texture2D cached))
             {
-                return cached as T;
+                if (cached == null)
+                {
+                    Icons.Remove(path);
+                }
+                else
+                {
+                    return cached as T;
+                }
             }
 
             string assetPath = AssetDatabase.GUIDToAssetPath(path);
@@ -54,20 +61,7 @@ namespace SaintsProject.Editor.Utils
             if (!asset && typeof(T) == typeof(Texture2D))
             {
                 // IconContent resolves built-in editor icons which FindTexture cannot find.
-                bool logging = Debug.unityLogger.logEnabled;
-                try
-                {
-                    Debug.unityLogger.logEnabled = false;
-                    asset = EditorGUIUtility.IconContent(path)?.image as T;
-                }
-                catch (System.Exception)
-                {
-                    // Icon availability differs across Unity versions.
-                }
-                finally
-                {
-                    Debug.unityLogger.logEnabled = logging;
-                }
+                asset = LoadIconContent(path) as T;
             }
 
             if (typeof(T) == typeof(Texture2D))
@@ -76,6 +70,42 @@ namespace SaintsProject.Editor.Utils
             }
 
             return asset;
+        }
+
+        public static Texture2D LoadIconContent(string name)
+        {
+            if (Icons.TryGetValue(name, out Texture2D cached))
+            {
+                if (cached == null)
+                {
+                    Icons.Remove(name);
+                }
+                else
+                {
+                    return cached;
+                }
+            }
+
+            bool logging = Debug.unityLogger.logEnabled;
+            try
+            {
+                Debug.unityLogger.logEnabled = false;
+                Texture2D result = EditorGUIUtility.IconContent(name)?.image as Texture2D;
+                if (result != null)
+                {
+                    return Icons[name] = result;
+                }
+            }
+            catch (System.Exception)
+            {
+                // Icon availability differs across Unity versions.
+            }
+            finally
+            {
+                Debug.unityLogger.logEnabled = logging;
+            }
+
+            return null;
         }
 
         public static Texture2D GetIcon(string path) => LoadResource<Texture2D>(path);

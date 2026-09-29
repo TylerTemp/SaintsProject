@@ -1,5 +1,27 @@
 {
     "name": "SaintsProject.Editor",
     "rootNamespace": "SaintsProject",
-    "includePlatforms": ["Editor"]
+    "references": [
+        "spine-csharp",
+        "spine-unity",
+        "AK.Wwise.Unity.API",
+        "AK.Wwise.Unity.API.WwiseTypes"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.esotericsoftware.spine.spine-unity",
+            "expression": "",
+            "define": "SAINTSPROJECT_SPINE_UNITY"
+        }
+    ],
+    "noEngineReferences": false
 }

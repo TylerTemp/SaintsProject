@@ -100,7 +100,10 @@ namespace SaintsProject.Editor.UIElement
         private readonly ColorField _colorField;
         public ColorPickerElement()
         {
-            _gameObjectConfigTemplate ??= Util.LoadResource<VisualTreeAsset>("UIToolkit/ColorPicker.uxml");
+            if (!_gameObjectConfigTemplate)
+            {
+                _gameObjectConfigTemplate = Util.LoadResource<VisualTreeAsset>("UIToolkit/ColorPicker.uxml");
+            }
             TemplateContainer root = _gameObjectConfigTemplate.CloneTree();
             Add(root);
             VisualElement colorRow = root.Q<VisualElement>(name: "ColorContainer");
@@ -151,7 +154,10 @@ namespace SaintsProject.Editor.UIElement
         private static Texture2D _whiteRectTexture;
         private static ItemButtonElement MakeColorButton(Color color)
         {
-            _whiteRectTexture ??= Util.LoadResource<Texture2D>("rect.png");
+            if (!_whiteRectTexture)
+            {
+                _whiteRectTexture = Util.LoadResource<Texture2D>("rect.png");
+            }
             ItemButtonElement itemButtonElement = new ItemButtonElement();
             itemButtonElement.Button.style.backgroundImage = _whiteRectTexture;
             itemButtonElement.Button.style.unityBackgroundImageTintColor = color;
