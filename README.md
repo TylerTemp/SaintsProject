@@ -29,3 +29,48 @@ Unity Project Tab enhancement. Use `Alt`+`Left Mouse Button` to select.
 1.  alt-click to change color and icon.
 2.  icon field can search built-in icons. But you can still input an image asset path for custom icons.
 3.  Tools - Saints Project to change different settings.
+
+
+### Installation ###
+
+*   Using git upm (Unity UI):
+
+    1. `Window` - `Package Manager`
+    2. Click `+` button, `Add package from git URL`
+    3. Enter the following URL:
+
+    ```
+    https://github.com/TylerTemp/SaintsProject.git
+    ```
+
+*   Using git upm:
+
+    add to `Packages/manifest.json` in your project
+
+    ```javascript
+    {
+        "dependencies": {
+            "today.comes.saintsproject": "https://github.com/TylerTemp/SaintsProject.git",
+            // your other dependencies...
+        }
+    }
+    ```
+
+*   Using [OpenUPM](https://openupm.com/packages/today.comes.saintsfield/)
+
+    ```bash
+    openupm add today.comes.saintsproject
+    ```
+
+*   Using a git submodule:
+
+    ```bash
+    git submodule add https://github.com/TylerTemp/SaintsProject.git Packages/today.comes.saintsproject
+    ```
+
+    Note: submodule will not auto upgrade. please read [Git Submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to know how to upgrade
+
+*   Using a `unitypackage` (NOT RECOMMENDED):
+
+    Go to the [Release Page](https://github.com/TylerTemp/SaintsProject/releases) to download a desired version of `unitypackage` and import it to your project
+
