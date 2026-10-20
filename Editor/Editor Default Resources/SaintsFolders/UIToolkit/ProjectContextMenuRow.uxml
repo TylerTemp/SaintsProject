@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True">
+    <Style src="ProjectContextMenuRowStyle.uss"/>
+    <ui:VisualElement class="project-context-row__content" picking-mode="Ignore">
+        <ui:Label name="check" class="project-context-row__check" picking-mode="Ignore"/>
+        <ui:Label name="label" class="project-context-row__label" picking-mode="Ignore"/>
+        <ui:Label name="shortcut" class="project-context-row__shortcut" picking-mode="Ignore"/>
+    </ui:VisualElement>
+</ui:UXML>

@@ -16,6 +16,8 @@ namespace SaintsProject.Editor.Config
 
         bool ContentMinimap { get; set; }
 
+        bool ReplaceContextMenu { get; set; }
+
         bool DisableFavorites { get; set; }
 
         bool FavoriteClickToInspect { get; set; }

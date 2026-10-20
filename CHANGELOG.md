@@ -1,3 +1,7 @@
+## 1.1.0 ##
+
+Add support for custom right click menu. You can disable this feature in `Tools` - `Saints Project` - `Replace Context Menu`
+
 ## 1.0.0 ##
 
 1.  Add: Spine detect

@@ -32,6 +32,8 @@ namespace SaintsProject.Editor.Config
         [field: SerializeField]
         public bool ContentMinimap { get; set; } = true;
 
+        [field: SerializeField] public bool ReplaceContextMenu { get; set; } = true;
+
         [field: SerializeField]
         public bool DisableFavorites { get; set; }
 

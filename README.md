@@ -11,13 +11,12 @@ Unity Project Tab enhancement. Use `Alt`+`Left Mouse Button` to select.
 ![](https://github.com/user-attachments/assets/92d90e59-8927-48fe-9f16-87a78d13c857)
 ![](https://github.com/user-attachments/assets/6677009c-0af2-42f1-9001-9a34dcc7352c)
 
-
 ## Features ##
 
 1.  Indent Guild lines
 2.  Background Strip
 3.  Minimal Mode
-4.  AUto Icons
+4.  Auto Icons
 5.  Content Minimap
 6.  Favorite Folders/Assets
 7.  Split for personal/team-shared configs
@@ -29,3 +28,15 @@ Unity Project Tab enhancement. Use `Alt`+`Left Mouse Button` to select.
 1.  alt-click to change color and icon.
 2.  icon field can search built-in icons. But you can still input an image asset path for custom icons.
 3.  Tools - Saints Project to change different settings.
+
+## Content Menu ##
+
+Add support for custom right click menu. You can disable this feature in `Tools` - `Saints Project` - `Replace Context Menu`
+
+The alternative context menu allow search the sub items. Use `ctrl/cmd` + `f` to toggle
+
+![](https://github.com/user-attachments/assets/7ba5f372-5a95-4856-9a53-7fc105d8bd75)
+
+The search can give the sub items
+
+![](https://github.com/user-attachments/assets/c590b9a4-25b3-46b2-99c6-571ff63c5737)

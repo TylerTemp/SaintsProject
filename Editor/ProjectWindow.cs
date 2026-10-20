@@ -26,9 +26,13 @@ namespace SaintsProject.Editor
 
         static ProjectWindow()
         {
+            EditorApplication.update -= CheckWindows;
             EditorApplication.update += CheckWindows;
+            AssemblyReloadEvents.beforeAssemblyReload -= RestoreAll;
             AssemblyReloadEvents.beforeAssemblyReload += RestoreAll;
+            EditorApplication.quitting -= RestoreAll;
             EditorApplication.quitting += RestoreAll;
+            ProjectConfigStore.Changed -= Refresh;
             ProjectConfigStore.Changed += Refresh;
         }
 
@@ -129,9 +133,11 @@ namespace SaintsProject.Editor
             public readonly FavoritesBar Bar = new FavoritesBar();
             private readonly Delegate _original;
             private readonly EditorWindow _window;
+            private readonly ProjectBrowserContextMenu _contextMenu;
             public Wrapper(EditorWindow window, object host, Delegate original)
             {
                 _window = window;
+                _contextMenu = new ProjectBrowserContextMenu(window);
                 Host = host;
                 _original = original;
                 Installed = Delegate.CreateDelegate(OnGUIField.FieldType, this, GetType().GetMethod(nameof(Draw), InstanceFlags)!);
@@ -139,6 +145,7 @@ namespace SaintsProject.Editor
 
             public void Restore()
             {
+                _contextMenu.Dispose();
                 if ((Delegate)OnGUIField.GetValue(Host) == Installed)
                 {
                     OnGUIField.SetValue(Host, _original);
@@ -151,7 +158,7 @@ namespace SaintsProject.Editor
                 {
                     _original.DynamicInvoke();
                 }
-                catch (TargetInvocationException exception)when (exception.InnerException != null)
+                catch (TargetInvocationException exception) when (exception.InnerException != null)
                 {
                     ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
                 }
@@ -168,7 +175,7 @@ namespace SaintsProject.Editor
                     IConfig config = ProjectConfigStore.Active;
                     if (config.Disabled || config.DisableFavorites)
                     {
-                        InvokeOriginal();
+                        _contextMenu.Draw(InvokeOriginal);
                         return;
                     }
 
@@ -176,7 +183,7 @@ namespace SaintsProject.Editor
                     using (new GUI.GroupScope(new Rect(0, height, originalPosition.width, Mathf.Max(1, originalPosition.height - height))))
                     {
                         Position.SetValue(_window, new Rect(originalPosition.x, originalPosition.y + height, originalPosition.width, Mathf.Max(1, originalPosition.height - height)));
-                        InvokeOriginal();
+                        _contextMenu.Draw(InvokeOriginal);
                     }
 
                     Bar.DrawDragLabel();
