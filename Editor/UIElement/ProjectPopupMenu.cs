@@ -168,6 +168,15 @@ namespace SaintsProject.Editor.UIElement
                 _focusGrace = EditorApplication.timeSinceStartup + .15;
                 popup.ShowPopup();
                 popup.position = rect;
+#if !UNITY_6000_6_OR_NEWER
+                if (popup.position.width > size.x || popup.position.height > size.y)
+                {
+                    // Older Unity versions enlarge short popups while fitting their position to the screen.
+                    // Change the constraints to force a native resize; assigning identical bounds is a no-op.
+                    popup.minSize = Vector2.zero;
+                    popup.minSize = size;
+                }
+#endif
                 popup.Focus();
                 popup.rootVisualElement.Focus();
                 if (selectFirst)
