@@ -40,3 +40,47 @@ The alternative context menu allow search the sub items. Use `ctrl/cmd` + `f` to
 The search can give the sub items
 
 ![](https://github.com/user-attachments/assets/c590b9a4-25b3-46b2-99c6-571ff63c5737)
+
+### Installation ###
+
+*   Using git upm (Unity UI):
+
+    1. `Window` - `Package Manager`
+    2. Click `+` button, `Add package from git URL`
+    3. Enter the following URL:
+
+    ```
+    https://github.com/TylerTemp/SaintsProject.git
+    ```
+
+*   Using git upm:
+
+    add to `Packages/manifest.json` in your project
+
+    ```javascript
+    {
+        "dependencies": {
+            "today.comes.saintsproject": "https://github.com/TylerTemp/SaintsProject.git",
+            // your other dependencies...
+        }
+    }
+    ```
+
+*   Using [OpenUPM](https://openupm.com/packages/today.comes.saintsfield/)
+
+    ```bash
+    openupm add today.comes.saintsproject
+    ```
+
+*   Using a git submodule:
+
+    ```bash
+    git submodule add https://github.com/TylerTemp/SaintsProject.git Packages/today.comes.saintsproject
+    ```
+
+    Note: submodule will not auto upgrade. please read [Git Submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to know how to upgrade
+
+*   Using a `unitypackage` (NOT RECOMMENDED):
+
+    Go to the [Release Page](https://github.com/TylerTemp/SaintsProject/releases) to download a desired version of `unitypackage` and import it to your project
+
