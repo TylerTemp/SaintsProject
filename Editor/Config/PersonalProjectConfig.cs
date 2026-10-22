@@ -49,6 +49,12 @@ namespace SaintsProject.Editor.Config
         [field: SerializeField]
         public List<AssetFavorite> Favorites { get; private set; } = new List<AssetFavorite>();
 
+        [field: SerializeField]
+        public List<ContextPathOverride> ContextPathOverrides { get; private set; } = new List<ContextPathOverride>();
+
+        [field: SerializeField]
+        public List<ContextCustomGroup> ContextCustomGroups { get; private set; } = new List<ContextCustomGroup>();
+
         public void SaveToDisk() => Save(true);
     }
 }

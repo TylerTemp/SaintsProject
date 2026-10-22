@@ -204,7 +204,9 @@ namespace SaintsProject.Editor.UIElement
                 if (entry.Separator) continue;
                 float text = EditorStyles.label.CalcSize(new GUIContent(entry.Label)).x;
                 float suffix = EditorStyles.label.CalcSize(new GUIContent(DisplaySuffix(entry))).x;
-                width = Mathf.Max(width, text + suffix + 74);
+                float prefix = entry.PrefixIcon ? 20 : string.IsNullOrEmpty(entry.PrefixText)
+                    ? 0 : EditorStyles.label.CalcSize(new GUIContent(entry.PrefixText)).x + 4;
+                width = Mathf.Max(width, text + suffix + prefix + 74);
             }
 
             if (isRoot)

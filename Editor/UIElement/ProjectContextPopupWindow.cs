@@ -164,7 +164,8 @@ namespace SaintsProject.Editor.UIElement
                 ProjectBrowserContextMenu.Entry entry = entries[i];
                 ProjectContextMenuRow row = entry.Separator
                     ? ProjectContextMenuRow.Separator()
-                    : new ProjectContextMenuRow(entry.Label, ProjectPopupMenu.DisplaySuffix(entry), entry.Checked, entry.Enabled);
+                    : new ProjectContextMenuRow(entry.Label, ProjectPopupMenu.DisplaySuffix(entry), entry.Checked, entry.Enabled,
+                        entry.PrefixIcon, entry.PrefixText);
                 rows.Add(row);
                 container.Add(row);
                 if (entry.Separator)
@@ -268,7 +269,7 @@ namespace SaintsProject.Editor.UIElement
                 return entity;
             }
 
-            string curSegPath = entity.Path ?? entity.Label ?? "";
+            string curSegPath = entity.DisplayPath ?? entity.Path ?? entity.Label ?? "";
             for (int indexRev = leftTokens.Count - 1; indexRev >= 0; indexRev--)
             {
                 string token = leftTokens[indexRev];

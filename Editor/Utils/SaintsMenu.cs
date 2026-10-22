@@ -61,10 +61,17 @@ namespace SaintsProject.Editor.Utils
         private static void ContentMinimap() => Toggle("Content Minimap", config => config.ContentMinimap = !config.ContentMinimap);
         [MenuItem(MenuRoot + "Content Minimap", true)]
         private static bool ContentMinimapValidate() => Check("Content Minimap", ProjectConfigStore.Active.ContentMinimap, !ProjectConfigStore.Active.Disabled);
+
         [MenuItem(MenuRoot + "Replace Context Menu", false, 4)]
         private static void ReplaceContextMenu() => Toggle("Replace Context Menu", config => config.ReplaceContextMenu = !config.ReplaceContextMenu);
         [MenuItem(MenuRoot + "Replace Context Menu", true)]
         private static bool ReplaceContextMenuValidate() => Check("Replace Context Menu", ProjectConfigStore.Active.ReplaceContextMenu, !ProjectConfigStore.Active.Disabled);
+
+        [MenuItem(MenuRoot + "Edit Context Menu...", false, 5)]
+        private static void EditContextMenu() => ContextMenuEditWindow.Open();
+        [MenuItem(MenuRoot + "Replace Context Menu", true)]
+        private static bool EditContextMenuEnabled() => !ProjectConfigStore.Active.Disabled && ProjectConfigStore.Active.ReplaceContextMenu;
+
         [MenuItem(MenuRoot + "Disable Favorites", false, 20)]
         private static void DisableFavorites() => Toggle("Disable Favorites", config => config.DisableFavorites = !config.DisableFavorites);
         [MenuItem(MenuRoot + "Disable Favorites", true)]

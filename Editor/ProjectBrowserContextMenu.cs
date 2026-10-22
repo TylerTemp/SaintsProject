@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using SaintsProject.Editor.Config;
 using SaintsProject.Editor.UIElement;
 using UnityEditor;
 using UnityEngine;
@@ -25,7 +26,10 @@ namespace SaintsProject.Editor
 
         internal static void SampleConfiguration()
         {
-            if (_sampled) return;
+            if (_sampled)
+            {
+                return;
+            }
             Enabled = !ProjectConfigStore.Active.Disabled && ProjectConfigStore.Active.ReplaceContextMenu;
             _sampled = true;
         }
@@ -33,12 +37,15 @@ namespace SaintsProject.Editor
         internal sealed class Entry
         {
             internal string Path;
+            internal string DisplayPath;
             internal string Label;
             internal string Shortcut;
             internal int Priority;
             internal bool Separator;
             internal bool Enabled;
             internal bool Checked;
+            internal Texture2D PrefixIcon;
+            internal string PrefixText;
             internal Action Execute;
             internal readonly List<Entry> Children = new List<Entry>();
 
@@ -47,12 +54,15 @@ namespace SaintsProject.Editor
                 Entry result = new Entry
                 {
                     Path = Path,
+                    DisplayPath = DisplayPath,
                     Label = Label,
                     Shortcut = Shortcut,
                     Priority = Priority,
                     Separator = false,
                     Enabled = Enabled,
                     Checked = Checked,
+                    PrefixIcon = PrefixIcon,
+                    PrefixText = PrefixText,
                     Execute = Execute,
                 };
                 result.Children.AddRange(children);
@@ -312,11 +322,19 @@ namespace SaintsProject.Editor
             {
                 // A mode can replace the native Assets menu independently of its registered commands.
                 Type mode = typeof(EditorWindow).Assembly.GetType("UnityEditor.ModeService");
-                if ((bool)(Call(mode, "HasContextMenu", "Assets/") ?? false)) return false;
+                if ((bool)(Call(mode, "HasContextMenu", "Assets/") ?? false))
+                {
+                    return false;
+                }
                 PropertyInfo safeMode = typeof(EditorUtility).GetProperty("isInSafeMode", Flags);
-                if ((bool)(safeMode?.GetValue(null) ?? false) && Selection.objects.Length == 0) return false;
+                if ((bool)(safeMode?.GetValue(null) ?? false) && Selection.objects.Length == 0)
+                {
+                    return false;
+                }
                 List<Entry> entries = ReadAssets(_window, folders);
-                return entries.Count > 0 && Show(entries);
+                // An intentionally empty resolved menu must not expose hidden commands
+                // again by falling back to Unity's original menu.
+                return entries.Count == 0 || Show(entries);
             });
         }
 
@@ -335,105 +353,117 @@ namespace SaintsProject.Editor
 
         internal static List<Entry> ReadAssets(EditorWindow window, bool folders)
         {
-            MethodInfo getItems = typeof(Menu).GetMethod("GetMenuItems", Flags);
-            if (getItems == null) throw new MissingMethodException("Menu.GetMenuItems");
-            Array items = (Array)getItems.Invoke(null, new object[] { "Assets", true, false });
-            Array localized = (Array)getItems.Invoke(null, new object[] { "Assets", true, true });
-            if (items == null || localized == null || items.Length != localized.Length) throw new InvalidOperationException("Menu metadata changed during enumeration.");
+            IConfig config = ProjectConfigStore.Active;
+            ContextMenuTree tree = ContextMenuResolver.Resolve(ProjectBrowserContextUtil.GetMenuItems(),
+                config.ContextPathOverrides, config.ContextCustomGroups);
 
-            PropertyInfo selectionProperty = typeof(Selection).GetProperty("entityIds", Flags) ?? typeof(Selection).GetProperty("instanceIDs", Flags);
+            PropertyInfo selectionProperty = typeof(Selection).GetProperty("entityIds", Flags)
+                                             ?? typeof(Selection).GetProperty("instanceIDs", Flags);
             Array selection = (Array)selectionProperty?.GetValue(null);
-            if (selection == null) throw new MissingMemberException("Selection IDs");
-            selection = (Array)selection.Clone();
-            Entry root = new Entry { Path = "Assets" };
-            Dictionary<string, Entry> branches = new Dictionary<string, Entry> { ["Assets"] = root };
-            MethodInfo hotkey = typeof(Menu).GetMethod("GetHotkey", Flags);
-            for (int i = 0; i < items.Length; i++)
+            if (selection == null)
             {
-                object item = items.GetValue(i);
-                string path = (string)Get(item, "path");
-                bool separator = (bool)Get(item, "isSeparator");
-                int priority = (int)Get(item, "priority");
-                if (separator && branches.TryGetValue(path, out Entry branch))
+                throw new MissingMemberException("Selection IDs");
+            }
+            selection = (Array)selection.Clone();
+            return CreateEntries(tree.Root);
+
+            List<Entry> CreateEntries(ContextMenuNode parent)
+            {
+                List<Entry> result = new List<Entry>();
+                foreach (ContextMenuNode node in parent.Children)
                 {
-                    branch.Children.Add(new Entry { Separator = true });
-                    continue;
-                }
-                if (!path.StartsWith("Assets/", StringComparison.Ordinal)) continue;
-                string displayPath = (string)Get(localized.GetValue(i), "path");
-                Entry parent = EnsureBranch(path.Substring(0, path.LastIndexOf('/')), branches);
-                Entry entry = new Entry
-                {
-                    Path = path,
-                    Label = displayPath.Substring(displayPath.LastIndexOf('/') + 1),
-                    Priority = priority,
-                    Enabled = IsEnabled(window, path, folders),
-                    Checked = Menu.GetChecked(path),
-                    Shortcut = (string)hotkey?.Invoke(null, new object[] { path }),
-                };
-                parent.Children.Add(entry);
-                if (separator) branches[path] = entry;
-                else
-                {
-                    string command = path;
+                    if (!node.IsVisible) continue;
+                    if (node.SeparatorBefore) result.Add(new Entry { Separator = true });
+                    bool commandNode = node.Kind == ContextMenuNodeKind.Command;
+                    Entry entry = new Entry
+                    {
+                        Path = node.SourcePath ?? node.Id,
+                        DisplayPath = node.DisplayPath,
+                        Label = node.Label,
+                        Priority = node.Priority,
+                        Enabled = !commandNode || IsEnabled(window, node.SourcePath, folders),
+                        Checked = commandNode && Menu.GetChecked(node.SourcePath),
+                        Shortcut = node.Shortcut,
+                    };
+                    switch (node.Prefix.Type)
+                    {
+                        case ContextPathPrefixType.TextureObject:
+                            entry.PrefixIcon = node.Prefix.TextureObject;
+                            break;
+                        case ContextPathPrefixType.TexturePath:
+                            if (!string.IsNullOrEmpty(node.Prefix.TexturePath))
+                            {
+                                entry.PrefixIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(node.Prefix.TexturePath)
+                                    ?? EditorGUIUtility.Load(node.Prefix.TexturePath) as Texture2D;
+                            }
+                            break;
+                        case ContextPathPrefixType.Text:
+                            entry.PrefixText = node.Prefix.Text;
+                            break;
+                    }
+                    entry.Children.AddRange(CreateEntries(node));
+                    result.Add(entry);
+                    if (!commandNode) continue;
+
+                    // Execution always uses the original command identity, even when
+                    // the row has been renamed or moved into a custom group.
+                    string command = node.SourcePath;
                     entry.Execute = () =>
                     {
-                        if (!window || !SameSelection(selection, selectionProperty.GetValue(null) as Array)) return;
+                        if (!window || !SameSelection(selection, selectionProperty.GetValue(null) as Array))
+                        {
+                            return;
+                        }
                         window.Focus();
                         Call(window, "SetAsLastInteractedProjectBrowser");
                         bool wasFolderContext = (bool)(Get(window, "isFolderTreeViewContextClicked") ?? false);
                         try
                         {
                             Set(window, "isFolderTreeViewContextClicked", folders);
-                            if (Menu.GetEnabled(command)) EditorApplication.ExecuteMenuItem(command);
+                            if (Menu.GetEnabled(command))
+                            {
+                                EditorApplication.ExecuteMenuItem(command);
+                            }
                         }
-                        finally { Set(window, "isFolderTreeViewContextClicked", wasFolderContext); }
+                        finally
+                        {
+                            Set(window, "isFolderTreeViewContextClicked", wasFolderContext);
+                        }
                     };
                 }
+                return result;
             }
-            AddPrioritySeparators(root);
-            return root.Children;
         }
 
         private static bool IsEnabled(EditorWindow window, string path, bool folders)
         {
             bool previous = (bool)(Get(window, "isFolderTreeViewContextClicked") ?? false);
-            try { Set(window, "isFolderTreeViewContextClicked", folders); return Menu.GetEnabled(path); }
-            finally { Set(window, "isFolderTreeViewContextClicked", previous); }
+            try
+            {
+                Set(window, "isFolderTreeViewContextClicked", folders);
+                return Menu.GetEnabled(path);
+            }
+            finally
+            {
+                Set(window, "isFolderTreeViewContextClicked", previous);
+            }
         }
 
         private static bool SameSelection(Array expected, Array actual)
         {
-            if (actual == null || actual.Length != expected.Length) return false;
-            for (int i = 0; i < expected.Length; i++) if (!Equals(expected.GetValue(i), actual.GetValue(i))) return false;
-            return true;
-        }
-
-        private static Entry EnsureBranch(string path, Dictionary<string, Entry> branches)
-        {
-            if (branches.TryGetValue(path, out Entry found)) return found;
-            Entry parent = EnsureBranch(path.Substring(0, path.LastIndexOf('/')), branches);
-            Entry entry = new Entry { Path = path, Label = path.Substring(path.LastIndexOf('/') + 1), Enabled = true };
-            parent.Children.Add(entry);
-            branches[path] = entry;
-            return entry;
-        }
-
-        private static void AddPrioritySeparators(Entry parent)
-        {
-            Entry previous = null;
-            for (int i = 0; i < parent.Children.Count; i++)
+            if (actual == null || actual.Length != expected.Length)
             {
-                Entry child = parent.Children[i];
-                if (child.Separator) { previous = null; continue; }
-                // Unity MenuItem's documented divider rule: adjacent priorities differ by at least 11.
-                if (previous != null && child.Priority - previous.Priority > 10)
-                {
-                    parent.Children.Insert(i++, new Entry { Separator = true });
-                }
-                AddPrioritySeparators(child);
-                previous = child;
+                return false;
             }
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            for (int i = 0; i < expected.Length; i++)
+            {
+                if (!Equals(expected.GetValue(i), actual.GetValue(i)))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private bool TryShowSavedFilter(object id)
@@ -460,12 +490,23 @@ namespace SaintsProject.Editor
             object context = Activator.CreateInstance(menu, Flags, null, new[] { filterId }, null);
             MethodInfo delete = menu.GetMethod("Delete", Flags)
                                 ?? throw new MissingMethodException(menu.FullName, "Delete");
-            return new List<Entry> { new Entry { Label = L10n.Tr("Delete"), Enabled = true, Execute = () => delete.Invoke(context, null) } };
+            return new List<Entry>
+            {
+                new Entry
+                {
+                    Label = L10n.Tr("Delete"),
+                    Enabled = true,
+                    Execute = () => delete.Invoke(context, null),
+                },
+            };
         }
 
         private bool Show(List<Entry> entries)
         {
-            if (_window.rootVisualElement.panel == null) return false;
+            if (_window.rootVisualElement.panel == null)
+            {
+                return false;
+            }
             Vector2 position = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
             _dropdown?.Close();
             _dropdown = new ProjectPopupMenu(_window, entries, position);
@@ -492,8 +533,11 @@ namespace SaintsProject.Editor
                 return null;
             }
             Type type = target as Type ?? target.GetType();
-            object instance = target is Type ? null : target;
-            return type.GetField(name, Flags)?.GetValue(instance) ?? type.GetProperty(name, Flags)?.GetValue(instance);
+            object instance = target is Type
+                ? null
+                : target;
+            return type.GetField(name, Flags)?.GetValue(instance)
+                   ?? type.GetProperty(name, Flags)?.GetValue(instance);
         }
 
         private static void Set(object target, string name, object value) => target.GetType().GetField(name, Flags)?.SetValue(target, value);

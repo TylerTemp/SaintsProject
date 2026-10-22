@@ -1,6 +1,7 @@
 using System;
 using SaintsProject.Editor.Utils;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace SaintsProject.Editor.UIElement
@@ -17,9 +18,32 @@ namespace SaintsProject.Editor.UIElement
             SetEnabled(!separator);
         }
 
-        internal ProjectContextMenuRow(string label, string shortcut, bool isChecked, bool enabled) : this(false)
+        internal ProjectContextMenuRow(string label, string shortcut, bool isChecked, bool enabled,
+            Texture2D prefixIcon = null, string prefixText = null) : this(false)
         {
-            this.Q<Label>("label").text = label;
+            Label labelElement = this.Q<Label>("label");
+            labelElement.text = label;
+            VisualElement prefix = null;
+            if (prefixIcon)
+            {
+                prefix = new Image
+                {
+                    image = prefixIcon,
+                    scaleMode = ScaleMode.ScaleToFit,
+                    style = { width = 16, height = 16 },
+                };
+            }
+            else if (!string.IsNullOrEmpty(prefixText))
+            {
+                prefix = new Label(prefixText);
+            }
+            if (prefix != null)
+            {
+                prefix.pickingMode = PickingMode.Ignore;
+                prefix.style.flexShrink = 0;
+                prefix.style.marginRight = 4;
+                labelElement.parent.Insert(labelElement.parent.IndexOf(labelElement), prefix);
+            }
             this.Q<Label>("shortcut").text = shortcut;
             this.Q<Label>("check").text = isChecked ? "✓" : "";
             SetEnabled(enabled);

@@ -28,6 +28,10 @@ namespace SaintsProject.Editor.Config
 
         List<AssetFavorite> Favorites { get; }
 
+        List<ContextPathOverride> ContextPathOverrides { get; }
+
+        List<ContextCustomGroup> ContextCustomGroups { get; }
+
         void SaveToDisk();
     }
 }
