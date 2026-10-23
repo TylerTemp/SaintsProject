@@ -381,9 +381,9 @@ empty
 
         internal static List<Entry> ReadAssets(EditorWindow window, bool folders)
         {
-            IConfig config = ProjectConfigStore.Active;
+            IConfig config = ProjectConfigStore.ContextMenu;
             ContextMenuTree tree = ContextMenuResolver.Resolve(ProjectBrowserContextUtil.GetMenuItems(),
-                config.ContextPathOverrides, config.ContextCustomGroups);
+                config.ContextPathOverrides, config.ContextCustomGroups, ProjectConfigStore.Active.DefaultContextMenuIcons);
 
             PropertyInfo selectionProperty = typeof(Selection).GetProperty("entityIds", Flags)
                                              ?? typeof(Selection).GetProperty("instanceIDs", Flags);
@@ -429,9 +429,9 @@ empty
                             break;
                         case ContextPathPrefixType.TexturePath:
                             if (!string.IsNullOrEmpty(node.Prefix.TexturePath))
-                        {
+                            {
                                 entry.PrefixIcon = Util.LoadResource<Texture2D>(node.Prefix.TexturePath);
-                        }
+                            }
                             break;
                         case ContextPathPrefixType.Text:
                             entry.PrefixText = node.Prefix.Text;

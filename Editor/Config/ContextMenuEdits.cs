@@ -12,7 +12,7 @@ namespace SaintsProject.Editor.Config
         {
             List<ContextPathOverride> result = overrides.Where(item => item.targetId != value.targetId).ToList();
             if (value.HasPlacementOverride || value.hidden || value.overridePriority
-                || value.separatorBefore != ContextSeparatorBefore.Default || value.prefixType != ContextPathPrefixType.None)
+                || value.separatorBefore != ContextSeparatorBefore.Default || value.prefixType != ContextPathPrefixType.Default)
             {
                 result.Add(value);
             }
@@ -53,11 +53,11 @@ namespace SaintsProject.Editor.Config
             }
             updatedGroups = updatedGroups.Select(group =>
             {
-    if (group.id == node.Id)
+                if (group.id == node.Id)
                 {
-        group.name = name;
+                    group.name = name;
                 }
-    return group;
+                return group;
             }).ToList();
             // Replace legacy rename overrides with the custom group's actual name.
             ContextPathOverride value = updatedOverrides.LastOrDefault(item => item.targetId == node.Id);
@@ -102,11 +102,11 @@ node.Id
             // must bypass deleted containers so Restore remains usable later.
             remainingGroups = remainingGroups.Where(group => !removed.Contains(group.id)).Select(group =>
             {
-    while (removed.Contains(group.parentId))
+                while (removed.Contains(group.parentId))
                 {
-        group.parentId = definitions[group.parentId].parentId;
+                    group.parentId = definitions[group.parentId].parentId;
                 }
-    return group;
+                return group;
             }).ToList();
 
             List<ContextPathOverride> updated = new List<ContextPathOverride>();
@@ -165,7 +165,8 @@ node.Id
             IEnumerable<ContextPathOverride> overrides, IEnumerable<ContextCustomGroup> groups,
             out ContextMenuTree proposed, out string error, string editedTarget = null)
         {
-            proposed = ContextMenuResolver.Resolve(source, overrides, groups);
+            // Placement validation does not need to load default icon resources.
+            proposed = ContextMenuResolver.Resolve(source, overrides, groups, false);
             HashSet<(string, string)> existing = new HashSet<(string, string)>(
                 current.Diagnostics.Select(issue => (issue.TargetId, issue.Message)));
             List<ContextMenuDiagnostic> introduced = proposed.Diagnostics

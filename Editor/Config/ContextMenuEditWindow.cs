@@ -114,12 +114,12 @@ namespace SaintsProject.Editor.Config
             };
             _tree.selectionChanged += selection =>
             {
-    if (_refreshing)
+                if (_refreshing)
                 {
-        return;
+                    return;
                 }
-    _selectedId = selection.OfType<ContextMenuNode>().FirstOrDefault()?.Id;
-    ShowDetails();
+                _selectedId = selection.OfType<ContextMenuNode>().FirstOrDefault()?.Id;
+                ShowDetails();
             };
             _tree.RegisterCallback<MouseMoveEvent>(StartDrag);
             _tree.RegisterCallback<MouseUpEvent>(_ => _pressedId = null);
@@ -158,9 +158,10 @@ namespace SaintsProject.Editor.Config
             }
             _refreshing = true;
             HashSet<string> expanded = new HashSet<string>(_itemIds.Where(pair => _tree.IsExpanded(pair.Value)).Select(pair => pair.Key));
-            _target = ProjectConfigStore.Active;
+            _target = ProjectConfigStore.ContextMenu;
             _source = ProjectBrowserContextUtil.GetMenuItems().ToList();
-            _resolved = ContextMenuResolver.Resolve(_source, _target.ContextPathOverrides, _target.ContextCustomGroups);
+            _resolved = ContextMenuResolver.Resolve(_source, _target.ContextPathOverrides, _target.ContextCustomGroups,
+                ProjectConfigStore.Active.DefaultContextMenuIcons);
             _configLabel.text = ReferenceEquals(_target, PersonalProjectConfig.instance) ? "Editing Personal Config" : "Editing Project Config";
             _tree.SetRootItems(_resolved.Root.Children.Select(TreeItem).ToList());
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
@@ -212,63 +213,63 @@ namespace SaintsProject.Editor.Config
             row.AddToClassList("context-menu-edit-row");
             row.RegisterCallback<MouseDownEvent>(evt =>
             {
-    if (evt.button != 0)
+                if (evt.button != 0)
                 {
-        return;
+                    return;
                 }
-    _pressedId = row.userData as string;
-    _pressPosition = evt.mousePosition;
+                _pressedId = row.userData as string;
+                _pressPosition = evt.mousePosition;
             });
             row.RegisterCallback<DragUpdatedEvent>(evt =>
             {
-    if (!OwnDrag(out MenuDrag drag))
+                if (!OwnDrag(out MenuDrag drag))
                 {
-        return;
+                    return;
                 }
-    bool valid = TryMove(drag.Id, row.userData as string, out _, out _);
-    DragAndDrop.visualMode = valid ? DragAndDropVisualMode.Move : DragAndDropVisualMode.Rejected;
-    row.style.backgroundColor = valid ? new Color(.2f, .5f, .8f, .25f) : StyleKeyword.Null;
-    evt.StopPropagation();
+                bool valid = TryMove(drag.Id, row.userData as string, out _, out _);
+                DragAndDrop.visualMode = valid ? DragAndDropVisualMode.Move : DragAndDropVisualMode.Rejected;
+                row.style.backgroundColor = valid ? new Color(.2f, .5f, .8f, .25f) : StyleKeyword.Null;
+                evt.StopPropagation();
             });
             row.RegisterCallback<DragLeaveEvent>(_ => row.style.backgroundColor = StyleKeyword.Null);
             row.RegisterCallback<DragExitedEvent>(_ => row.style.backgroundColor = StyleKeyword.Null);
             row.RegisterCallback<DragPerformEvent>(evt =>
             {
-    if (!OwnDrag(out MenuDrag drag))
+                if (!OwnDrag(out MenuDrag drag))
                 {
-        return;
+                    return;
                 }
-    row.style.backgroundColor = StyleKeyword.Null;
-    if (TryMove(drag.Id, row.userData as string, out List<ContextPathOverride> proposal, out string error))
+                row.style.backgroundColor = StyleKeyword.Null;
+                if (TryMove(drag.Id, row.userData as string, out List<ContextPathOverride> proposal, out string error))
                 {
-        DragAndDrop.AcceptDrag();
-        _selectedId = drag.Id;
-        Commit(proposal, _target.ContextCustomGroups.ToList(), "Move Context Menu Item");
+                    DragAndDrop.AcceptDrag();
+                    _selectedId = drag.Id;
+                    Commit(proposal, _target.ContextCustomGroups.ToList(), "Move Context Menu Item");
                 }
-    else
+                else
                 {
-        ShowError(error);
+                    ShowError(error);
                 }
-    DragAndDrop.SetGenericData(DragKey, null);
-    evt.StopPropagation();
+                DragAndDrop.SetGenericData(DragKey, null);
+                evt.StopPropagation();
             });
             row.AddManipulator(new ContextualMenuManipulator(evt =>
             {
-    if (!(row.userData is string id) || !_resolved.ById.TryGetValue(id, out ContextMenuNode node))
+                if (!(row.userData is string id) || !_resolved.ById.TryGetValue(id, out ContextMenuNode node))
                 {
-        return;
+                    return;
                 }
-    if (ContextMenuEdits.CanRestoreLocation(node))
+                if (ContextMenuEdits.CanRestoreLocation(node))
                 {
-        evt.menu.AppendAction("Restore original location", _ => Restore(node));
+                    evt.menu.AppendAction("Restore original location", _ => Restore(node));
                 }
-    if (node.Kind != ContextMenuNodeKind.Command)
+                if (node.Kind != ContextMenuNodeKind.Command)
                 {
-        evt.menu.AppendAction("New group", _ => NewGroup(node));
+                    evt.menu.AppendAction("New group", _ => NewGroup(node));
                 }
-    if (node.SourcePath == null)
+                if (node.SourcePath == null)
                 {
-        evt.menu.AppendAction("Delete group", _ => DeleteGroup(node), ContextMenuEdits.CanDeleteGroup(node, _target.ContextPathOverrides, _target.ContextCustomGroups) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                    evt.menu.AppendAction("Delete group", _ => DeleteGroup(node), ContextMenuEdits.CanDeleteGroup(node, _target.ContextPathOverrides, _target.ContextCustomGroups) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                 }
             }));
             return row;
@@ -304,7 +305,7 @@ namespace SaintsProject.Editor.Config
             Texture2D icon = node.Prefix.Type == ContextPathPrefixType.TextureObject ? node.Prefix.TextureObject : null;
             if (node.Prefix.Type == ContextPathPrefixType.TexturePath && !string.IsNullOrEmpty(node.Prefix.TexturePath))
             {
-                icon = AssetDatabase.LoadAssetAtPath<Texture2D>(node.Prefix.TexturePath) ?? EditorGUIUtility.Load(node.Prefix.TexturePath) as Texture2D;
+                icon = Util.LoadResource<Texture2D>(node.Prefix.TexturePath);
             }
             VisualElement iconContainer = row.Q<VisualElement>("icon");
             Label prefix = iconContainer.Q<Label>("iconText");
@@ -425,10 +426,10 @@ namespace SaintsProject.Editor.Config
             _error.style.display = DisplayStyle.None;
             ProjectConfigStore.Edit(_target, undoName, () =>
             {
-    _target.ContextPathOverrides.Clear();
-    _target.ContextPathOverrides.AddRange(overrides);
-    _target.ContextCustomGroups.Clear();
-    _target.ContextCustomGroups.AddRange(groups);
+                _target.ContextPathOverrides.Clear();
+                _target.ContextPathOverrides.AddRange(overrides);
+                _target.ContextCustomGroups.Clear();
+                _target.ContextCustomGroups.AddRange(groups);
             });
             return true;
         }
@@ -444,16 +445,16 @@ namespace SaintsProject.Editor.Config
             {
                 style =
                 {
-unityFontStyleAndWeight = FontStyle.Bold,
-marginTop = 8
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    marginTop = 8
                 }
             });
             _details.Add(new Label(node.DisplayPath)
             {
                 style =
                 {
-whiteSpace = WhiteSpace.Normal,
-marginBottom = 6
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 6
                 }
             });
             if (node.Kind == ContextMenuNodeKind.Root)
@@ -465,39 +466,39 @@ marginBottom = 6
             {
                 style =
                 {
-whiteSpace = WhiteSpace.Normal,
-marginBottom = 6
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 6
                 }
             });
             ContextPathOverride value = node.AppliedOverride ?? new ContextPathOverride
             {
                 targetId = node.Id
             };
-            TextField name = new TextField("Name")
+            TextField nameField = new TextField("Name")
             {
                 name = "item-name",
                 value = node.Name,
                 isDelayed = true
             };
-            name.RegisterValueChangedCallback(evt =>
+            nameField.RegisterValueChangedCallback(evt =>
             {
-    if (node.SourcePath == null)
+                if (node.SourcePath == null)
                 {
-        if (ContextMenuEdits.RenameGroup(node, evt.newValue, _target.ContextPathOverrides, _target.ContextCustomGroups, out List<ContextPathOverride> overrides, out List<ContextCustomGroup> groups))
+                    if (ContextMenuEdits.RenameGroup(node, evt.newValue, _target.ContextPathOverrides, _target.ContextCustomGroups, out List<ContextPathOverride> overrides, out List<ContextCustomGroup> groups))
                     {
-            Commit(overrides, groups, "Rename Context Menu Group");
+                        Commit(overrides, groups, "Rename Context Menu Group");
                     }
                 }
-    else
+                else
                 {
-        Change(config =>
+                    Change(config =>
                     {
-    config.newName = evt.newValue == node.OriginalName ? null : evt.newValue;
-    return config;
+                        config.newName = evt.newValue == node.OriginalName ? null : evt.newValue;
+                        return config;
                     });
                 }
             });
-            _details.Add(name);
+            _details.Add(nameField);
             Toggle hidden = new Toggle("Hidden")
             {
                 name = "item-hidden",
@@ -505,8 +506,8 @@ marginBottom = 6
             };
             hidden.RegisterValueChangedCallback(evt => Change(config =>
             {
-    config.hidden = evt.newValue;
-    return config;
+                config.hidden = evt.newValue;
+                return config;
             }));
             _details.Add(hidden);
             if (node.HiddenInHierarchy && !node.HiddenSelf)
@@ -520,12 +521,12 @@ marginBottom = 6
             };
             priorityOverride.RegisterValueChangedCallback(evt => Change(config =>
             {
-    config.overridePriority = evt.newValue;
-    if (evt.newValue)
+                config.overridePriority = evt.newValue;
+                if (evt.newValue)
                 {
-        config.priority = node.Priority;
+                    config.priority = node.Priority;
                 }
-    return config;
+                return config;
             }));
             _details.Add(priorityOverride);
             IntegerField priority = new IntegerField("Priority")
@@ -537,8 +538,8 @@ marginBottom = 6
             priority.SetEnabled(value.overridePriority);
             priority.RegisterValueChangedCallback(evt => Change(config =>
             {
-    config.priority = evt.newValue;
-    return config;
+                config.priority = evt.newValue;
+                return config;
             }));
             _details.Add(priority);
             EnumField separator = new EnumField("Separator before", value.separatorBefore)
@@ -547,60 +548,64 @@ marginBottom = 6
             };
             separator.RegisterValueChangedCallback(evt => Change(config =>
             {
-    config.separatorBefore = (ContextSeparatorBefore)evt.newValue;
-    return config;
+                config.separatorBefore = (ContextSeparatorBefore)evt.newValue;
+                return config;
             }));
             _details.Add(separator);
             EnumField prefix = new EnumField("Prefix", value.prefixType)
             {
-                name = "item-prefix"
+                name = "item-prefix",
+                tooltip = "Default uses the SaintsProject icon for the original menu path, if available. None shows no prefix."
             };
             prefix.RegisterValueChangedCallback(evt => Change(config =>
             {
-    config.prefixType = (ContextPathPrefixType)evt.newValue;
-    return config;
+                config.prefixType = (ContextPathPrefixType)evt.newValue;
+                return config;
             }));
             _details.Add(prefix);
             switch (value.prefixType)
             {
+                case ContextPathPrefixType.Default:
+                case ContextPathPrefixType.None:
+                    break;
                 case ContextPathPrefixType.TextureObject:
                     ObjectField texture = new ObjectField("Icon")
-                {
+                    {
                         objectType = typeof(Texture2D),
                         allowSceneObjects = false,
                         value = value.prefixTextureObject
-                };
+                    };
                     texture.RegisterValueChangedCallback(evt => Change(config =>
-                {
-    config.prefixTextureObject = evt.newValue as Texture2D;
-    return config;
-                }));
+                    {
+                        config.prefixTextureObject = evt.newValue as Texture2D;
+                        return config;
+                    }));
                     _details.Add(texture);
                     break;
                 case ContextPathPrefixType.TexturePath:
                     TextField path = new TextField("Icon path")
-                {
+                    {
                         value = value.prefixTexturePath,
                         isDelayed = true
-                };
+                    };
                     path.RegisterValueChangedCallback(evt => Change(config =>
-                {
-    config.prefixTexturePath = evt.newValue;
-    return config;
-                }));
+                    {
+                        config.prefixTexturePath = evt.newValue;
+                        return config;
+                    }));
                     _details.Add(path);
                     break;
                 case ContextPathPrefixType.Text:
                     TextField text = new TextField("Prefix text")
-                {
+                    {
                         value = value.prefixText,
                         isDelayed = true
-                };
+                    };
                     text.RegisterValueChangedCallback(evt => Change(config =>
-                {
-    config.prefixText = evt.newValue;
-    return config;
-                }));
+                    {
+                        config.prefixText = evt.newValue;
+                        return config;
+                    }));
                     _details.Add(text);
                     break;
             }
@@ -641,21 +646,29 @@ marginBottom = 6
             _issues.Add(list);
             foreach (ContextMenuDiagnostic issue in _resolved.Diagnostics)
             {
-                VisualElement row = new VisualElement();
-                row.Add(new Label(issue.TargetId + ": " + issue.Message)
+                VisualElement row = new VisualElement
                 {
                     style =
                     {
-whiteSpace = WhiteSpace.Normal
-                    }
-                });
+                        flexDirection = FlexDirection.Row,
+                    },
+                };
                 if (_target.ContextPathOverrides.Any(item => item.targetId == issue.TargetId))
                 {
                     row.Add(new Button(() => Commit(_target.ContextPathOverrides.Where(item => item.targetId != issue.TargetId).ToList(), _target.ContextCustomGroups.ToList(), "Remove Invalid Context Menu Override"))
                     {
-                        text = "Remove override"
+                        text = "Remove",
                     });
                 }
+
+                row.Add(new Label(issue.TargetId + ": " + issue.Message)
+                {
+                    style =
+                    {
+                        whiteSpace = WhiteSpace.Normal,
+                    },
+                });
+
                 list.Add(row);
             }
         }

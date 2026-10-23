@@ -1,3 +1,12 @@
+## 1.2.0 ##
+
+Add support for custom right click menu of:
+
+1.  Hide menu you don't want
+2.  Move menu into another submenu, even a submenu you created
+3.  Rename menu name, custom icons
+4.  Provide default icons for menu
+
 ## 1.1.0 ##
 
 Add support for custom right click menu. You can disable this feature in `Tools` - `Saints Project` - `Replace Context Menu`

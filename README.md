@@ -31,15 +31,22 @@ Unity Project Tab enhancement. Use `Alt`+`Left Mouse Button` to select.
 
 ## Content Menu ##
 
-Add support for custom right click menu. You can disable this feature in `Tools` - `Saints Project` - `Replace Context Menu`
+Add support for custom right click menu. 
+
+You can disable this feature in `Tools` - `Saints Project` - `Replace Context Menu`.
+
+You can custom the menu in `Tools` - `Saints Project` - `Edit Context Menu...` to
+1.  Hide menu you don't want
+2.  Move menu into another submenu, even a submenu you created
+3.  Rename menu name, custom icons
 
 The alternative context menu allow search the sub items. Use `ctrl/cmd` + `f` to toggle
 
-![](https://github.com/user-attachments/assets/7ba5f372-5a95-4856-9a53-7fc105d8bd75)
+![](https://github.com/user-attachments/assets/68b43f8c-43fa-47d9-80a4-bf692e36944e)
 
 The search can give the sub items
 
-![](https://github.com/user-attachments/assets/c590b9a4-25b3-46b2-99c6-571ff63c5737)
+![](https://github.com/user-attachments/assets/0fbeb15e-fe1b-42e7-8f40-b957dcb9f33b)
 
 ### Installation ###
 
@@ -83,4 +90,3 @@ The search can give the sub items
 *   Using a `unitypackage` (NOT RECOMMENDED):
 
     Go to the [Release Page](https://github.com/TylerTemp/SaintsProject/releases) to download a desired version of `unitypackage` and import it to your project
-

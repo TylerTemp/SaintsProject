@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SaintsProject.Editor.Config;
+using SaintsProject.Editor.Utils;
+using UnityEngine;
 
 namespace SaintsProject.Editor
 {
@@ -9,10 +11,9 @@ namespace SaintsProject.Editor
     // preview and popup resolve the same snapshot without modifying saved config.
     internal static class ContextMenuResolver
     {
-        internal static ContextMenuTree Resolve(
-            IEnumerable<ProjectBrowserContextUtil.MenuItem> source,
+        internal static ContextMenuTree Resolve(IEnumerable<ProjectBrowserContextUtil.MenuItem> source,
             IEnumerable<ContextPathOverride> overrides,
-            IEnumerable<ContextCustomGroup> customGroups)
+            IEnumerable<ContextCustomGroup> customGroups, bool defaultContextMenuIcons)
         {
             ContextMenuNode root = new ContextMenuNode("Assets", ContextMenuNodeKind.Root, "Assets")
             {
@@ -25,8 +26,31 @@ namespace SaintsProject.Editor
             ReadSource(tree, source);
             AddCustomGroups(tree, customGroups ?? Array.Empty<ContextCustomGroup>());
             ApplyOverrides(tree, overrides ?? Array.Empty<ContextPathOverride>());
+            if (defaultContextMenuIcons)
+            {
+                ResolveDefaultPrefixes(tree);
+            }
             FinalizeTree(tree);
             return tree;
+        }
+
+        private static void ResolveDefaultPrefixes(ContextMenuTree tree)
+        {
+            foreach (ContextMenuNode node in tree.ById.Values)
+            {
+                if (node.Prefix.Type != ContextPathPrefixType.Default)
+                {
+                    continue;
+                }
+                Texture2D icon = node.SourcePath != null && ContextMenuDefaults.DefaultIcons.TryGetValue(node.SourcePath, out string path)
+                    ? Util.LoadResource<Texture2D>(path)
+                    : null;
+                node.Prefix = new ContextMenuPrefix
+                {
+                    Type = icon == null ? ContextPathPrefixType.None : ContextPathPrefixType.TextureObject,
+                    TextureObject = icon,
+                };
+            }
         }
 
         private static void ReadSource(ContextMenuTree tree, IEnumerable<ProjectBrowserContextUtil.MenuItem> source)
@@ -190,12 +214,12 @@ namespace SaintsProject.Editor
                 if (string.IsNullOrEmpty(config.targetId) || !tree.ById.ContainsKey(config.targetId)
                                                          || config.targetId == tree.Root.Id)
                 {
-                    Report(tree, config.targetId, "Override target is missing or is the menu root.");
+                    Report(tree, config.targetId, "Target is missing or is root");
                     continue;
                 }
                 if (indexed.ContainsKey(config.targetId))
                 {
-                    Report(tree, config.targetId, "Duplicate override; the last record is used.");
+                    Report(tree, config.targetId, "Duplicated; Last used");
                 }
                 indexed[config.targetId] = config;
             }

@@ -56,6 +56,15 @@ namespace SaintsProject.Editor.Config
         } = true;
 
         [field: SerializeField]
+        public bool DefaultContextMenuIcons { get; set; } = true;
+
+        [field: SerializeField]
+        public bool SaveContextMenuToProjectConfig
+        {
+            get; set;
+        }
+
+        [field: SerializeField]
         public bool DisableFavorites
         {
             get; set;

@@ -39,6 +39,13 @@ namespace SaintsProject.Editor.Config
             get; set;
         }
 
+        bool DefaultContextMenuIcons { get; set; }
+
+        bool SaveContextMenuToProjectConfig
+        {
+            get; set;
+        }
+
         bool DisableFavorites
         {
             get; set;

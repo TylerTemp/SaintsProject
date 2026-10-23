@@ -7,7 +7,7 @@ namespace SaintsProject.Editor.Utils
 {
     public static class Util
     {
-        private const string ResourceRoot = "Packages/today.comes.saintsproject/Editor/Editor Default Resources/SaintsFolders/";
+        private const string ResourceRoot = "Packages/today.comes.saintsproject/Editor/Editor Default Resources/SaintsProject/";
         private static readonly Dictionary<string, Texture2D> Icons = new Dictionary<string, Texture2D>();
 
         public static void ClearCache() => Icons.Clear();

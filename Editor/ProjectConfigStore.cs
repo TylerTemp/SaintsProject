@@ -16,6 +16,8 @@ namespace SaintsProject.Editor
 
         public static IConfig Favorites => Active.SaveFavoritesToProjectConfig ? SaintsProjectConfig.instance : PersonalProjectConfig.instance;
 
+        public static IConfig ContextMenu => Active.SaveContextMenuToProjectConfig ? SaintsProjectConfig.instance : PersonalProjectConfig.instance;
+
         private static readonly Dictionary<string, AssetConfig> Resolved = new Dictionary<string, AssetConfig>();
         private static readonly Dictionary<string, AssetConfig> Direct = new Dictionary<string, AssetConfig>();
         private static readonly HashSet<IConfig> Modified = new HashSet<IConfig>();

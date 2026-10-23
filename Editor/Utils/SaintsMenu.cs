@@ -74,31 +74,50 @@ namespace SaintsProject.Editor.Utils
         [MenuItem(MenuRoot + "Content Minimap", true)]
         private static bool ContentMinimapValidate() => Check("Content Minimap", ProjectConfigStore.Active.ContentMinimap, !ProjectConfigStore.Active.Disabled);
 
-        [MenuItem(MenuRoot + "Replace Context Menu", false, 4)]
+        #region Context Menu
+
+        private const int ContextMenuOrder = 20;
+
+        [MenuItem(MenuRoot + "Replace Context Menu", false, ContextMenuOrder)]
         private static void ReplaceContextMenu() => Toggle("Replace Context Menu", config => config.ReplaceContextMenu = !config.ReplaceContextMenu);
 
         [MenuItem(MenuRoot + "Replace Context Menu", true)]
         private static bool ReplaceContextMenuValidate() => Check("Replace Context Menu", ProjectConfigStore.Active.ReplaceContextMenu, !ProjectConfigStore.Active.Disabled);
 
-        [MenuItem(MenuRoot + "Edit Context Menu...", false, 5)]
+        [MenuItem(MenuRoot + "Default Context Menu Icons", false, ContextMenuOrder+1)]
+        private static void DefaultContextMenuIcons() => Toggle("Default Context Menu Icons", config => config.DefaultContextMenuIcons = !config.DefaultContextMenuIcons);
+
+        [MenuItem(MenuRoot + "Default Context Menu Icons", true)]
+        private static bool DefaultContextMenuIconsValidate() => Check("Default Context Menu Icons", ProjectConfigStore.Active.DefaultContextMenuIcons, !ProjectConfigStore.Active.Disabled && ProjectConfigStore.Active.ReplaceContextMenu);
+
+        [MenuItem(MenuRoot + "Save Context Menu To Project Config", false, ContextMenuOrder+2)]
+        private static void SaveContextMenuToProjectConfig() => Toggle("Save Context Menu To Project Config", config => config.SaveContextMenuToProjectConfig = !config.SaveContextMenuToProjectConfig);
+
+        [MenuItem(MenuRoot + "Save Context Menu To Project Config", true)]
+        private static bool SaveContextMenuToProjectConfigValidate() => Check("Save Context Menu To Project Config", ProjectConfigStore.Active.SaveContextMenuToProjectConfig, !ProjectConfigStore.Active.Disabled && ProjectConfigStore.Active.ReplaceContextMenu);
+
+        [MenuItem(MenuRoot + "Edit Context Menu...", false, ContextMenuOrder+3)]
         private static void EditContextMenu() => ContextMenuEditWindow.Open();
 
-        [MenuItem(MenuRoot + "Replace Context Menu", true)]
+        [MenuItem(MenuRoot + "Edit Context Menu...", true)]
         private static bool EditContextMenuEnabled() => !ProjectConfigStore.Active.Disabled && ProjectConfigStore.Active.ReplaceContextMenu;
+        #endregion
 
-        [MenuItem(MenuRoot + "Disable Favorites", false, 20)]
+        private const int FavoriteOrder = 40;
+
+        [MenuItem(MenuRoot + "Disable Favorites", false, FavoriteOrder)]
         private static void DisableFavorites() => Toggle("Disable Favorites", config => config.DisableFavorites = !config.DisableFavorites);
 
         [MenuItem(MenuRoot + "Disable Favorites", true)]
         private static bool DisableFavoritesValidate() => Check("Disable Favorites", ProjectConfigStore.Active.DisableFavorites, !ProjectConfigStore.Active.Disabled);
 
-        [MenuItem(MenuRoot + "Favorite Click To Inspect", false, 21)]
+        [MenuItem(MenuRoot + "Favorite Click To Inspect", false, FavoriteOrder + 1)]
         private static void FavoriteClickToInspect() => Toggle("Favorite Click To Inspect", config => config.FavoriteClickToInspect = !config.FavoriteClickToInspect);
 
         [MenuItem(MenuRoot + "Favorite Click To Inspect", true)]
         private static bool FavoriteClickToInspectValidate() => Check("Favorite Click To Inspect", ProjectConfigStore.Active.FavoriteClickToInspect, !ProjectConfigStore.Active.Disabled && !ProjectConfigStore.Active.DisableFavorites);
 
-        [MenuItem(MenuRoot + "Save Favorites To Project Config", false, 22)]
+        [MenuItem(MenuRoot + "Save Favorites To Project Config", false, FavoriteOrder + 2)]
         private static void SaveFavoritesToProjectConfig() => Toggle("Save Favorites To Project Config", config => config.SaveFavoritesToProjectConfig = !config.SaveFavoritesToProjectConfig);
 
         [MenuItem(MenuRoot + "Save Favorites To Project Config", true)]

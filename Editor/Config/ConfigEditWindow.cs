@@ -52,6 +52,7 @@ namespace SaintsProject.Editor.Config
                 AddToggle(appearance, "Auto Icons", _target.AutoIcons, value => _target.AutoIcons = value);
                 AddToggle(appearance, "Content Minimap", _target.ContentMinimap, value => _target.ContentMinimap = value);
                 AddToggle(appearance, "Replace Context Menu", _target.ReplaceContextMenu, value => _target.ReplaceContextMenu = value);
+                AddToggle(appearance, "Save Context Menu To Project Config", _target.SaveContextMenuToProjectConfig, value => _target.SaveContextMenuToProjectConfig = value);
                 AddToggle(appearance, "Disable Favorites", _target.DisableFavorites, value => _target.DisableFavorites = value);
                 VisualElement favorites = new VisualElement();
                 appearance.Add(favorites);
