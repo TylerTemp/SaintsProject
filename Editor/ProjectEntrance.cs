@@ -475,6 +475,13 @@ arg
         [MenuItem("Assets/Saints Project/Add Favorite", true)]
         private static bool HasSelection() => Selection.activeObject && EditorUtility.IsPersistent(Selection.activeObject);
 
+        [MenuItem("Assets/Saints Project/Edit Context Menu", false, 2002)]
+        private static void EditContextMenu() => ContextMenuEditWindow.Open();
+
+        [MenuItem("Assets/Saints Project/Edit Context Menu", true)]
+        private static bool EditContextMenuEnabled() =>
+            !ProjectConfigStore.Active.Disabled && ProjectConfigStore.Active.ReplaceContextMenu;
+
         [MenuItem("Assets/Saints Project/Add Favorite", false, 2001)]
         private static void FavoriteSelection()
         {

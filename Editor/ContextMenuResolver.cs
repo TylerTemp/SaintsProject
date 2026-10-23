@@ -42,9 +42,18 @@ namespace SaintsProject.Editor
                 {
                     continue;
                 }
-                Texture2D icon = node.SourcePath != null && ContextMenuDefaults.DefaultIcons.TryGetValue(node.SourcePath, out string path)
-                    ? Util.LoadResource<Texture2D>(path)
-                    : null;
+                Texture2D icon = null;
+                if (node.SourcePath != null && ContextMenuDefaults.DefaultIcons.TryGetValue(node.SourcePath, out string[] paths))
+                {
+                    foreach (string path in paths)
+                    {
+                        icon = Util.LoadResource<Texture2D>(path);
+                        if (icon != null)
+                        {
+                            break;
+                        }
+                    }
+                }
                 node.Prefix = new ContextMenuPrefix
                 {
                     Type = icon == null ? ContextPathPrefixType.None : ContextPathPrefixType.TextureObject,
