@@ -9,14 +9,15 @@ namespace SaintsProject.Editor.Utils
     {
         private const string ResourceRoot = "Packages/today.comes.saintsproject/Editor/Editor Default Resources/SaintsFolders/";
         private static readonly Dictionary<string, Texture2D> Icons = new Dictionary<string, Texture2D>();
+
         public static void ClearCache() => Icons.Clear();
+
         public static string NormalizeIcon(string icon)
         {
             if (string.IsNullOrEmpty(icon))
             {
                 return "";
             }
-
             string guid = AssetDatabase.AssetPathToGUID(icon);
             return string.IsNullOrEmpty(guid) ? icon : guid;
         }
@@ -28,7 +29,6 @@ namespace SaintsProject.Editor.Utils
             {
                 return null;
             }
-
             if (typeof(T) == typeof(Texture2D) && Icons.TryGetValue(path, out Texture2D cached))
             {
                 if (cached == null)
@@ -40,35 +40,29 @@ namespace SaintsProject.Editor.Utils
                     return cached as T;
                 }
             }
-
             string assetPath = AssetDatabase.GUIDToAssetPath(path);
             T asset = AssetDatabase.LoadAssetAtPath<T>(string.IsNullOrEmpty(assetPath) ? path : assetPath);
             if (!asset)
             {
                 asset = AssetDatabase.LoadAssetAtPath<T>("Assets/Editor Default Resources/SaintsProject/" + path);
             }
-
             if (!asset)
             {
                 asset = AssetDatabase.LoadAssetAtPath<T>(ResourceRoot + path);
             }
-
             if (!asset)
             {
                 asset = EditorGUIUtility.Load(path) as T;
             }
-
             if (!asset && typeof(T) == typeof(Texture2D))
             {
                 // IconContent resolves built-in editor icons which FindTexture cannot find.
                 asset = LoadIconContent(path) as T;
             }
-
             if (typeof(T) == typeof(Texture2D))
             {
                 Icons[path] = asset as Texture2D;
             }
-
             return asset;
         }
 
@@ -85,7 +79,6 @@ namespace SaintsProject.Editor.Utils
                     return cached;
                 }
             }
-
             bool logging = Debug.unityLogger.logEnabled;
             try
             {
@@ -104,7 +97,6 @@ namespace SaintsProject.Editor.Utils
             {
                 Debug.unityLogger.logEnabled = logging;
             }
-
             return null;
         }
 

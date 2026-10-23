@@ -12,12 +12,14 @@ namespace SaintsProject.Editor
         private AssetFavorite _favorite;
         private static VisualTreeAsset _template;
         private float _height = 380;
+
         public FavoriteConfigPopup(AssetFavorite favorite)
         {
             _favorite = favorite;
         }
 
         public override Vector2 GetWindowSize() => new Vector2(200, _height);
+
         public override void OnGUI(Rect rect)
         {
         }
@@ -47,26 +49,26 @@ namespace SaintsProject.Editor
             RefreshFields();
             root.Q<Button>("deleteButton").clicked += () =>
             {
-                ProjectConfigStore.RemoveFavorite(_favorite);
-                editorWindow.Close();
+    ProjectConfigStore.RemoveFavorite(_favorite);
+    editorWindow.Close();
             };
             root.Q<Button>("saveButton").clicked += Save;
             alias.RegisterCallback<KeyDownEvent>(evt =>
             {
-                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+    if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
                 {
-                    Save();
-                    evt.StopPropagation();
+        Save();
+        evt.StopPropagation();
                 }
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<AttachToPanelEvent>(_ => alias.Focus());
             root.RegisterCallback<GeometryChangedEvent>(_ =>
             {
-                float height = root.resolvedStyle.height;
-                if (!float.IsNaN(height) && height > 0 && !Mathf.Approximately(_height, height))
+    float height = root.resolvedStyle.height;
+    if (!float.IsNaN(height) && height > 0 && !Mathf.Approximately(_height, height))
                 {
-                    _height = height;
-                    editorWindow.Repaint();
+        _height = height;
+        editorWindow.Repaint();
                 }
             });
             editorWindow.rootVisualElement.Add(template);
@@ -82,12 +84,10 @@ namespace SaintsProject.Editor
                 {
                     _favorite.colorType = FavoriteColorType.NoColor;
                 }
-
                 _favorite.color = colors.value.Color;
                 ProjectConfigStore.SetFavorite(_favorite);
                 editorWindow.Close();
             }
-
             void RefreshFields()
             {
                 bool custom = (FavoriteIconType)iconType.value == FavoriteIconType.Custom;

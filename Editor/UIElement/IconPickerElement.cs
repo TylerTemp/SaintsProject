@@ -21,6 +21,7 @@ namespace SaintsProject.Editor.UIElement
                 name = "no-delete-button",
                 defaultValue = false,
             };
+
             public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
             {
                 base.Init(ve, bag, cc);
@@ -47,7 +48,6 @@ namespace SaintsProject.Editor.UIElement
                 {
                     return;
                 }
-
                 _noDeleteButton = value;
                 if (_iconRow != null)
                 {
@@ -55,12 +55,14 @@ namespace SaintsProject.Editor.UIElement
                 }
             }
         }
+
         private bool _noDeleteButton;
         private static Texture2D _closeIcon;
         private static VisualTreeAsset _iconPickerTemplate;
         public readonly ToolbarSearchField Search;
         private string _curIcon;
         private readonly VisualElement _iconRow;
+
         // ReSharper disable once MemberCanBePrivate.Global
         public IconPickerElement() : this("")
         {
@@ -85,10 +87,10 @@ namespace SaintsProject.Editor.UIElement
             RefreshIconRows();
             Search.RegisterValueChangedCallback(evt =>
             {
-                evt.StopPropagation();
-                RefreshIconRows();
+    evt.StopPropagation();
+    RefreshIconRows();
             });
-        // RegisterCallback<AttachToPanelEvent>(_ => _search.Focus());
+            // RegisterCallback<AttachToPanelEvent>(_ => _search.Focus());
         }
 
         private void RefreshIconRows()
@@ -119,18 +121,16 @@ namespace SaintsProject.Editor.UIElement
                     {
                         searchInputDirectButton.SetSelected(true);
                     }
-
                     searchInputDirectButton.Button.clicked += () =>
                     {
-                        string searchData = Search.value;
-                        if (!string.IsNullOrEmpty(searchData))
+    string searchData = Search.value;
+    if (!string.IsNullOrEmpty(searchData))
                         {
-                            value = searchData;
+        value = searchData;
                         }
                     };
                 }
             }
-
             if (!string.IsNullOrEmpty(_curIcon) && !presetIcons.Contains(_curIcon))
             {
                 customButton.Button.style.backgroundImage = Util.LoadResource<Texture2D>(_curIcon);
@@ -139,7 +139,6 @@ namespace SaintsProject.Editor.UIElement
             {
                 customButton.style.display = DisplayStyle.None;
             }
-
             if (!string.IsNullOrEmpty(_curIcon) && !NoDeleteButton) // has icon
             {
                 if (!_closeIcon)
@@ -151,7 +150,6 @@ namespace SaintsProject.Editor.UIElement
                 noIconButton.Button.clicked += ClearIcon;
                 _iconRow.Add(noIconButton);
             }
-
             foreach (string iconPath in presetIcons)
             {
                 Texture2D icon = Util.LoadResource<Texture2D>(iconPath);
@@ -159,7 +157,6 @@ namespace SaintsProject.Editor.UIElement
                 {
                     continue;
                 }
-
                 ItemButtonElement btn = MakeIconButton(icon);
                 bool isCurrent = iconPath == _curIcon;
                 if (isCurrent)
@@ -171,7 +168,6 @@ namespace SaintsProject.Editor.UIElement
                 {
                     btn.Button.clicked += () => value = iconPath;
                 }
-
                 btn.Button.tooltip = iconPath;
                 _iconRow.Add(btn);
             }
@@ -212,7 +208,6 @@ namespace SaintsProject.Editor.UIElement
                 {
                     return;
                 }
-
                 string previous = this.value;
                 SetValueWithoutNotify(value);
                 using ChangeEvent<string> evt = ChangeEvent<string>.GetPooled(previous, value);

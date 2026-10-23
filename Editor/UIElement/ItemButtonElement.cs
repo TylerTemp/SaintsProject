@@ -16,6 +16,7 @@ namespace SaintsProject.Editor.UIElement
 #endif
         private static VisualTreeAsset _template;
         public readonly Button Button;
+
         public ItemButtonElement()
         {
             if (!_template)

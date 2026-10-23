@@ -3,7 +3,7 @@
     <Style src="project://database/Packages/today.comes.saintsproject/Editor/Editor%20Default%20Resources/SaintsFolders/UIToolkit/ProjectContextSearchRowStyle.uss?fileID=7433441132597879392&amp;guid=01df9c9c3f55451b9f4f08734022ca94&amp;type=3#ProjectContextSearchRowStyle"/>
     <ui:VisualElement>
         <ui:Button name="search-start-button" class="project-context-row project-context-row__content search-start-button">
-            <ui:Image name="icon" picking-mode="Ignore" class="project-context-row__check"/>
+            <ui:Image name="icon" picking-mode="Ignore" class="project-context-row__icon"/>
             <ui:Label name="label" picking-mode="Ignore" text="Search..." class="project-context-row__label"/>
             <ui:Label name="shortcut" picking-mode="Ignore" text="Ctrl+F" class="project-context-row__shortcut"/>
         </ui:Button>

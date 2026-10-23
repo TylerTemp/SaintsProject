@@ -6,11 +6,15 @@ using UnityEngine.UIElements;
 
 namespace SaintsProject.Editor.UIElement
 {
-    public class ProjectContextSearchRow: VisualElement
+    public class ProjectContextSearchRow : VisualElement
     {
         private readonly Button _searchStartButton;
         public readonly ToolbarSearchField ToolbarSearchField;
-        internal bool IsSearching { get; private set; }
+
+        internal bool IsSearching
+        {
+            get; private set;
+        }
 
         public ProjectContextSearchRow()
         {

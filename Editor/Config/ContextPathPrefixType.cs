@@ -6,8 +6,11 @@ namespace SaintsProject.Editor.Config
     public enum ContextPathPrefixType
     {
         None,
+
         TexturePath,
+
         TextureObject,
+
         Text,
     }
 }

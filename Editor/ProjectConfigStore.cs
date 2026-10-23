@@ -11,13 +11,16 @@ namespace SaintsProject.Editor
     public static class ProjectConfigStore
     {
         public static event Action Changed;
+
         public static IConfig Active => PersonalProjectConfig.instance.personalEnabled ? PersonalProjectConfig.instance : SaintsProjectConfig.instance;
+
         public static IConfig Favorites => Active.SaveFavoritesToProjectConfig ? SaintsProjectConfig.instance : PersonalProjectConfig.instance;
 
         private static readonly Dictionary<string, AssetConfig> Resolved = new Dictionary<string, AssetConfig>();
         private static readonly Dictionary<string, AssetConfig> Direct = new Dictionary<string, AssetConfig>();
         private static readonly HashSet<IConfig> Modified = new HashSet<IConfig>();
         private static IConfig _indexedConfig;
+
         static ProjectConfigStore()
         {
             EditorApplication.projectChanged += Invalidate;
@@ -31,7 +34,6 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             // Editor subscriptions survive when domain reload is disabled, but cached
             // asset references and configuration values can change across Play mode.
             FolderContents.Invalidate();
@@ -64,7 +66,6 @@ namespace SaintsProject.Editor
             {
                 config.SaveToDisk();
             }
-
             Invalidate();
         }
 
@@ -83,7 +84,6 @@ namespace SaintsProject.Editor
                     }
                 }
             }
-
             return Direct.TryGetValue(guid, out AssetConfig value) ? value : new AssetConfig
             {
                 guid = guid,
@@ -98,7 +98,6 @@ namespace SaintsProject.Editor
             {
                 return cached;
             }
-
             bool needsIcon = string.IsNullOrEmpty(value.icon);
             bool needsColor = !value.hasColor;
             string parent = assetPath;
@@ -111,16 +110,17 @@ namespace SaintsProject.Editor
                     value.icon = inherited.icon;
                     needsIcon = false;
                 }
-
                 // ReSharper disable once InvertIf
-                if (needsColor && inherited is { recursiveColor: true, hasColor: true })
+                if (needsColor && inherited is
+                {
+                        recursiveColor: true, hasColor: true
+                })
                 {
                     value.hasColor = true;
                     value.color = inherited.color;
                     needsColor = false;
                 }
             }
-
             Resolved[assetPath] = value;
             return value;
         }
@@ -131,14 +131,13 @@ namespace SaintsProject.Editor
             {
                 throw new ArgumentException("Asset GUID does not resolve to an existing asset.", nameof(value));
             }
-
             IConfig config = Active;
             Edit(config, "Edit Project Asset Appearance", () =>
             {
-                config.Assets.RemoveAll(each => each.guid == value.guid);
-                if (value.hasColor || !string.IsNullOrEmpty(value.icon))
+    config.Assets.RemoveAll(each => each.guid == value.guid);
+    if (value.hasColor || !string.IsNullOrEmpty(value.icon))
                 {
-                    config.Assets.Add(value);
+        config.Assets.Add(value);
                 }
             });
         }
@@ -149,7 +148,6 @@ namespace SaintsProject.Editor
             {
                 throw new ArgumentException("Favorites must be persistent project assets.", nameof(asset));
             }
-
             // Main assets follow their GUID even if their importer changes their local ID.
             return new AssetFavorite
             {
@@ -165,12 +163,10 @@ namespace SaintsProject.Editor
             {
                 return null;
             }
-
             if (favorite.localId == 0)
             {
                 return AssetDatabase.LoadMainAssetAtPath(path);
             }
-
             foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
             {
                 if (asset && AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string _, out long id) && id == favorite.localId)
@@ -178,13 +174,15 @@ namespace SaintsProject.Editor
                     return asset;
                 }
             }
-
             return null;
         }
 
         public static void AddFavorite(Object asset, int index = -1)
         {
-            AddFavorites(new[] { asset }, index);
+            AddFavorites(new[]
+            {
+asset
+            }, index);
         }
 
         public static void AddFavorites(IReadOnlyList<Object> assets, int index = -1)
@@ -198,7 +196,6 @@ namespace SaintsProject.Editor
                 {
                     continue;
                 }
-
                 int oldIndex = config.Favorites.FindIndex(each => each.SameAsset(favorite));
                 if (oldIndex >= 0)
                 {
@@ -206,18 +203,14 @@ namespace SaintsProject.Editor
                     {
                         continue;
                     }
-
                     favorite = config.Favorites[oldIndex];
                 }
-
                 incoming.Add(favorite);
             }
-
             if (incoming.Count == 0)
             {
                 return;
             }
-
             int insertion = index < 0 ? config.Favorites.Count : Mathf.Clamp(index, 0, config.Favorites.Count);
             List<AssetFavorite> reordered = new List<AssetFavorite>();
             int removedBeforeInsertion = 0;
@@ -236,23 +229,20 @@ namespace SaintsProject.Editor
                     reordered.Add(favorite);
                 }
             }
-
             reordered.InsertRange(insertion - removedBeforeInsertion, incoming);
             bool unchanged = reordered.Count == config.Favorites.Count;
             for (int i = 0; unchanged && i < reordered.Count; i++)
             {
                 unchanged = reordered[i].SameAsset(config.Favorites[i]);
             }
-
             if (unchanged)
             {
                 return;
             }
-
             Edit(config, "Add or Move Project Favorites", () =>
             {
-                config.Favorites.Clear();
-                config.Favorites.AddRange(reordered);
+    config.Favorites.Clear();
+    config.Favorites.AddRange(reordered);
             });
         }
 
@@ -264,7 +254,6 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             Edit(config, "Edit Project Favorite", () => config.Favorites[index] = favorite);
         }
 

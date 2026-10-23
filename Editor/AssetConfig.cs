@@ -17,7 +17,9 @@ namespace SaintsProject.Editor
     public enum FavoriteIconType
     {
         Default,
+
         UnityDefault,
+
         // None,
         Custom,
     }
@@ -25,7 +27,9 @@ namespace SaintsProject.Editor
     public enum FavoriteColorType
     {
         Default,
+
         NoColor,
+
         CustomColor,
     }
 
@@ -39,6 +43,7 @@ namespace SaintsProject.Editor
         public string icon;
         public FavoriteColorType colorType;
         public Color color;
+
         public bool SameAsset(AssetFavorite other) => guid == other.guid && localId == other.localId;
     }
 }

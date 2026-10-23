@@ -1,8 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True">
-    <Style src="ProjectContextMenuRowStyle.uss"/>
-    <ui:VisualElement class="project-context-row__content" picking-mode="Ignore">
-        <ui:Label name="check" class="project-context-row__check" picking-mode="Ignore"/>
-        <ui:Label name="label" class="project-context-row__label" picking-mode="Ignore"/>
-        <ui:Label name="shortcut" class="project-context-row__shortcut" picking-mode="Ignore"/>
+    <Style src="project://database/Packages/today.comes.saintsproject/Editor/Editor%20Default%20Resources/SaintsFolders/UIToolkit/ProjectContextMenuRowStyle.uss?fileID=7433441132597879392&amp;guid=d3edd8a39687d4e439061655af682f63&amp;type=3#ProjectContextMenuRowStyle"/>
+    <ui:VisualElement picking-mode="Ignore" class="project-context-row__content">
+        <ui:VisualElement name="icon" picking-mode="Ignore" class="project-context-row__icon">
+            <ui:Label name="iconText" text="✓"/>
+            <ui:Image name="iconImage" style="display: none"/>
+            <ui:Image name="iconChecked" tint-color="rgb(50, 205, 50)" class="project-context-row__icon_checked"/>
+        </ui:VisualElement>
+        <ui:Label name="label" picking-mode="Ignore" text="Label"  class="project-context-row__label"/>
+        <ui:Label name="shortcut" picking-mode="Ignore" text="Ctrl+F" class="project-context-row__shortcut"/>
     </ui:VisualElement>
 </ui:UXML>

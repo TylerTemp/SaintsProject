@@ -12,9 +12,13 @@ namespace SaintsProject.Editor.UIElement
     internal sealed class ProjectPopupMenu
     {
         private const BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+
         internal static bool Supported => Supports(typeof(EditorWindow)) && DesktopMethod != null;
+
         internal static bool Supports(Type type) => type.GetMethod("ShowPopup", Type.EmptyTypes) != null;
+
         private static MethodInfo DesktopMethod => typeof(EditorWindow).Assembly.GetType("UnityEditorInternal.InternalEditorUtility")?.GetMethod("GetBoundsOfDesktopAtPoint", Flags);
+
         private readonly EditorWindow _owner;
         private readonly List<ProjectBrowserContextMenu.Entry> _entries;
         private readonly Vector2 _position;
@@ -23,6 +27,7 @@ namespace SaintsProject.Editor.UIElement
         private bool _closed;
         private bool _applicationWasActive;
         private ProjectContextPopupWindow _pointerWindow;
+
         internal IReadOnlyList<ProjectContextPopupWindow> Levels => _levels;
 
         internal ProjectPopupMenu(EditorWindow owner, List<ProjectBrowserContextMenu.Entry> entries, Vector2 screenPosition)
@@ -38,7 +43,6 @@ namespace SaintsProject.Editor.UIElement
             {
                 throw new NotSupportedException("Frameless popup hosting is unavailable.");
             }
-
             _applicationWasActive = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
             _owner.rootVisualElement.RegisterCallback<PointerDownEvent>(OnOwnerPointerDown, TrickleDown.TrickleDown);
             _owner.rootVisualElement.RegisterCallback<DetachFromPanelEvent>(OnOwnerDetached);
@@ -126,7 +130,10 @@ namespace SaintsProject.Editor.UIElement
             }
         }
 
-        internal static Rect Desktop(Vector2 point) => (Rect)DesktopMethod.Invoke(null, new object[] { point });
+        internal static Rect Desktop(Vector2 point) => (Rect)DesktopMethod.Invoke(null, new object[]
+        {
+point
+        });
 
         internal static Rect Place(Vector2 point, Vector2 size, Rect desktop, Rect? parent = null)
         {
@@ -135,7 +142,10 @@ namespace SaintsProject.Editor.UIElement
             {
                 Rect p = parent.Value;
                 point.x = p.xMax - 1;
-                if (point.x + size.x > desktop.xMax) point.x = p.xMin - size.x + 1;
+                if (point.x + size.x > desktop.xMax)
+                {
+                    point.x = p.xMin - size.x + 1;
+                }
             }
             return new Rect(new Vector2(Mathf.Clamp(point.x, desktop.xMin, desktop.xMax - size.x),
                 Mathf.Clamp(point.y, desktop.yMin, desktop.yMax - size.y)), size);
@@ -201,19 +211,20 @@ namespace SaintsProject.Editor.UIElement
             foreach (ProjectBrowserContextMenu.Entry entry in entries)
             {
                 height += entry.Separator ? sepHeight : itemHeight;
-                if (entry.Separator) continue;
+                if (entry.Separator)
+                {
+                    continue;
+                }
                 float text = EditorStyles.label.CalcSize(new GUIContent(entry.Label)).x;
                 float suffix = EditorStyles.label.CalcSize(new GUIContent(DisplaySuffix(entry))).x;
                 float prefix = entry.PrefixIcon ? 20 : string.IsNullOrEmpty(entry.PrefixText)
                     ? 0 : EditorStyles.label.CalcSize(new GUIContent(entry.PrefixText)).x + 4;
                 width = Mathf.Max(width, text + suffix + prefix + 74);
             }
-
             if (isRoot)
             {
                 height += sepHeight + itemHeight;
             }
-
             return new Vector2(Mathf.Min(Mathf.Ceil(width) + 2, desktop.width), Mathf.Min(height, desktop.height));
         }
 
@@ -228,7 +239,6 @@ namespace SaintsProject.Editor.UIElement
             {
                 return shortcut;
             }
-
             bool action = false, control = false, alt = false, shift = false;
             int index = 0;
 
@@ -248,14 +258,13 @@ namespace SaintsProject.Editor.UIElement
                     case '#':
                         shift = true;
                         break;
-                    // '_' marks a shortcut without adding a modifier.
+                        // '_' marks a shortcut without adding a modifier.
                 }
             }
             if (index == 0 || index == shortcut.Length)
             {
                 return shortcut;
             }
-
             string token = shortcut[index..];
             string key;
             if (token.Length == 1 && !char.IsWhiteSpace(token[0]) && !char.IsControl(token[0]))
@@ -318,19 +327,18 @@ namespace SaintsProject.Editor.UIElement
                         key = token.ToUpperInvariant();
                         if (key.Length is >= 2 and <= 3 && key[0] == 'F' && int.TryParse(key[1..], out int number)
                             && number is >= 1 and <= 24 && key == "F" + number)
-                        {
+                    {
                             break;
-                        }
+                    }
                         // ReSharper disable once InvertIf
                         if (key.Length == 2 && key[0] == 'M' && key[1] >= '0' && key[1] <= '6')
-                        {
+                    {
                             key = "Mouse" + key[1];
                             break;
-                        }
+                    }
                         return shortcut;
                 }
             }
-
             StringBuilder text = new StringBuilder();
             if (control || action && !isMac)
             {
@@ -348,13 +356,15 @@ namespace SaintsProject.Editor.UIElement
             {
                 text.Append("Shift+");
             }
-
             return text.Append(key).ToString();
         }
 
         internal void ClearSelection(ProjectContextPopupWindow window)
         {
-            if (_closed || !_levels.Contains(window)) return;
+            if (_closed || !_levels.Contains(window))
+            {
+                return;
+            }
             window.HoverGeneration++;
             window.Select(-1);
             CloseFrom(_levels.IndexOf(window) + 1);
@@ -382,26 +392,23 @@ namespace SaintsProject.Editor.UIElement
             {
                 return;
             }
-
             window.rootVisualElement.schedule.Execute(() =>
             {
-                if (_closed || !window || window.HoverGeneration != generation || !_levels.Contains(window))
+    if (_closed || !window || window.HoverGeneration != generation || !_levels.Contains(window))
                 {
-                    return;
+        return;
                 }
-
-                if (!_levels.Contains(EditorWindow.focusedWindow as ProjectContextPopupWindow))
+    if (!_levels.Contains(EditorWindow.focusedWindow as ProjectContextPopupWindow))
                 {
-                    return;
+        return;
                 }
-
-                if (entry.Children.Count > 0)
+    if (entry.Children.Count > 0)
                 {
-                    OpenChild(window, index, false);
+        OpenChild(window, index, false);
                 }
-                else
+    else
                 {
-                    CloseFrom(_levels.IndexOf(window) + 1);
+        CloseFrom(_levels.IndexOf(window) + 1);
                 }
             }).StartingIn(150);
         }
@@ -421,7 +428,6 @@ namespace SaintsProject.Editor.UIElement
             {
                 return;
             }
-
             _pointerWindow = window;
         }
 
@@ -445,13 +451,11 @@ namespace SaintsProject.Editor.UIElement
             {
                 return;
             }
-
             ProjectBrowserContextMenu.Entry entry = window.Entries[index];
             if (!entry.Enabled || entry.Children.Count == 0)
             {
                 return;
             }
-
             int depth = _levels.IndexOf(window) + 1;
             if (depth < _levels.Count && _levels[depth].ParentEntry == entry)
             {
@@ -490,7 +494,6 @@ namespace SaintsProject.Editor.UIElement
             {
                 return;
             }
-
             if (entry.Children.Count > 0)
             {
                 OpenChild(window, index, true);
@@ -502,7 +505,10 @@ namespace SaintsProject.Editor.UIElement
 
         internal void Key(ProjectContextPopupWindow window, KeyDownEvent evt)
         {
-            if (_closed || !_levels.Contains(window)) return;
+            if (_closed || !_levels.Contains(window))
+            {
+                return;
+            }
             switch (evt.keyCode)
             {
                 case KeyCode.Escape:
@@ -525,18 +531,18 @@ namespace SaintsProject.Editor.UIElement
                 case KeyCode.LeftArrow:
                     int depth = _levels.IndexOf(window);
                     if (depth > 0)
-                    {
+                {
                         CloseFrom(depth);
                         _focusGrace = EditorApplication.timeSinceStartup + .15;
                         _levels[depth - 1].Focus();
                         _levels[depth - 1].rootVisualElement.Focus();
-                    }
+                }
                     break;
                 case KeyCode.RightArrow:
                     if (window.Selected >= 0)
-                    {
+                {
                         OpenChild(window, window.Selected, true);
-                    }
+                }
                     break;
                 case KeyCode.Return:
                 case KeyCode.KeypadEnter:

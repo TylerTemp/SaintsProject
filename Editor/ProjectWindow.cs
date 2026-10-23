@@ -22,7 +22,11 @@ namespace SaintsProject.Editor
         private static readonly PropertyInfo ActualView = HostType?.GetProperty("actualView", InstanceFlags);
         private static readonly Dictionary<EditorWindow, Wrapper> Windows = new Dictionary<EditorWindow, Wrapper>();
         private static double _nextCheck;
-        public static EditorWindow Current { get; private set; }
+
+        public static EditorWindow Current
+        {
+            get; private set;
+        }
 
         static ProjectWindow()
         {
@@ -42,7 +46,6 @@ namespace SaintsProject.Editor
             {
                 wrapper.Bar.Invalidate();
             }
-
             _nextCheck = 0;
         }
 
@@ -52,13 +55,11 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             _nextCheck = EditorApplication.timeSinceStartup + .5;
             if (BrowserType == null || Parent == null || Position == null || OnGUIField == null || ActualView == null)
             {
                 return;
             }
-
             List<EditorWindow> stale = new List<EditorWindow>();
             // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (KeyValuePair<EditorWindow, Wrapper> pair in Windows)
@@ -68,13 +69,11 @@ namespace SaintsProject.Editor
                     stale.Add(pair.Key);
                 }
             }
-
             foreach (EditorWindow window in stale)
             {
                 Windows[window].Restore();
                 Windows.Remove(window);
             }
-
             foreach (Object findWindow in Resources.FindObjectsOfTypeAll(BrowserType))
             {
                 EditorWindow window = findWindow as EditorWindow;
@@ -87,28 +86,23 @@ namespace SaintsProject.Editor
                 {
                     continue;
                 }
-
                 if (OnGUIField.GetValue(host) is not Delegate current)
                 {
                     continue;
                 }
-
                 if (Windows.TryGetValue(window, out Wrapper existing))
                 {
                     if (current == existing.Installed)
                     {
                         continue;
                     }
-
                     // Another extension may wrap ours. Do not create a recursive chain.
                     if (current.Method.DeclaringType != BrowserType)
                     {
                         continue;
                     }
-
                     Windows.Remove(window);
                 }
-
                 Wrapper wrapper = new Wrapper(window, host, current);
                 Windows[window] = wrapper;
                 OnGUIField.SetValue(host, wrapper.Installed);
@@ -122,7 +116,6 @@ namespace SaintsProject.Editor
             {
                 wrapper.Restore();
             }
-
             Windows.Clear();
         }
 
@@ -134,6 +127,7 @@ namespace SaintsProject.Editor
             private readonly Delegate _original;
             private readonly EditorWindow _window;
             private readonly ProjectBrowserContextMenu _contextMenu;
+
             public Wrapper(EditorWindow window, object host, Delegate original)
             {
                 _window = window;
@@ -178,14 +172,12 @@ namespace SaintsProject.Editor
                         _contextMenu.Draw(InvokeOriginal);
                         return;
                     }
-
                     float height = Bar.OnGUI(originalPosition.width, originalPosition.height * .35f);
                     using (new GUI.GroupScope(new Rect(0, height, originalPosition.width, Mathf.Max(1, originalPosition.height - height))))
                     {
                         Position.SetValue(_window, new Rect(originalPosition.x, originalPosition.y + height, originalPosition.width, Mathf.Max(1, originalPosition.height - height)));
                         _contextMenu.Draw(InvokeOriginal);
                     }
-
                     Bar.DrawDragLabel();
                 }
                 finally
@@ -196,6 +188,4 @@ namespace SaintsProject.Editor
             }
         }
     }
-
-
 }

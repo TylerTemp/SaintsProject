@@ -12,6 +12,7 @@ namespace SaintsProject.Editor.UIElement
         public readonly bool HasColor;
         public readonly bool IsCustomColor;
         public readonly Color Color;
+
         public ColorPickerResult(bool hasColor, bool isCustomColor, Color color)
         {
             HasColor = hasColor;
@@ -61,7 +62,6 @@ namespace SaintsProject.Editor.UIElement
             {
                 return hasColorComparison;
             }
-
             return IsCustomColor.CompareTo(other.IsCustomColor);
         }
     }
@@ -98,6 +98,7 @@ namespace SaintsProject.Editor.UIElement
         private ColorPickerResult _curValue;
         private readonly IReadOnlyList<(ItemButtonElement, Color)> _presentColorButtons;
         private readonly ColorField _colorField;
+
         public ColorPickerElement()
         {
             if (!_gameObjectConfigTemplate)
@@ -129,16 +130,15 @@ namespace SaintsProject.Editor.UIElement
                 colorButton.Button.clicked += () => value = new ColorPickerResult(true, false, presetColor);
                 colorButtons.Add((colorButton, presetColor));
             }
-
             _presentColorButtons = colorButtons;
             _colorField = colorRow.Q<ColorField>(name: "CustomColor");
             _colorField.tooltip = "Custom Color";
             // colorField.value = color ?? default;
             _colorField.RegisterValueChangedCallback(evt =>
             {
-                Color newColor = evt.newValue;
-                // SetColor(true, true, newColor);
-                value = new ColorPickerResult(true, true, newColor);
+    Color newColor = evt.newValue;
+    // SetColor(true, true, newColor);
+    value = new ColorPickerResult(true, true, newColor);
             });
 #if !UNITY_6000_3_OR_NEWER
             _colorField.style.width = 46;
@@ -152,6 +152,7 @@ namespace SaintsProject.Editor.UIElement
         }
 
         private static Texture2D _whiteRectTexture;
+
         private static ItemButtonElement MakeColorButton(Color color)
         {
             if (!_whiteRectTexture)
@@ -167,12 +168,11 @@ namespace SaintsProject.Editor.UIElement
         public void SetValueWithoutNotify(ColorPickerResult newValue)
         {
             _curValue = newValue;
-            foreach ((ItemButtonElement buttonElement, Color presentColor)in _presentColorButtons)
+            foreach ((ItemButtonElement buttonElement, Color presentColor) in _presentColorButtons)
             {
                 bool isPresent = _curValue.HasColor && presentColor == _curValue.Color;
                 buttonElement.SetSelected(isPresent);
             }
-
             if (_colorField.value != newValue.Color)
             {
                 _colorField.SetValueWithoutNotify(_curValue.Color);
@@ -189,7 +189,6 @@ namespace SaintsProject.Editor.UIElement
                     // Debug.Log($"no changes");
                     return;
                 }
-
                 ColorPickerResult previous = this.value;
                 SetValueWithoutNotify(value);
                 using ChangeEvent<ColorPickerResult> evt = ChangeEvent<ColorPickerResult>.GetPooled(previous, value);

@@ -8,7 +8,9 @@ namespace SaintsProject.Editor
     internal enum ContextMenuNodeKind
     {
         Root,
+
         Group,
+
         Command,
     }
 

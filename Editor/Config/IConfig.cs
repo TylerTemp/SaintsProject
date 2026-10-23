@@ -4,33 +4,75 @@ namespace SaintsProject.Editor.Config
 {
     public interface IConfig
     {
-        bool Disabled { get; set; }
+        bool Disabled
+        {
+            get; set;
+        }
 
-        bool BackgroundStrip { get; set; }
+        bool BackgroundStrip
+        {
+            get; set;
+        }
 
-        bool MinimalMode { get; set; }
+        bool MinimalMode
+        {
+            get; set;
+        }
 
-        bool IndentGuides { get; set; }
+        bool IndentGuides
+        {
+            get; set;
+        }
 
-        bool AutoIcons { get; set; }
+        bool AutoIcons
+        {
+            get; set;
+        }
 
-        bool ContentMinimap { get; set; }
+        bool ContentMinimap
+        {
+            get; set;
+        }
 
-        bool ReplaceContextMenu { get; set; }
+        bool ReplaceContextMenu
+        {
+            get; set;
+        }
 
-        bool DisableFavorites { get; set; }
+        bool DisableFavorites
+        {
+            get; set;
+        }
 
-        bool FavoriteClickToInspect { get; set; }
+        bool FavoriteClickToInspect
+        {
+            get; set;
+        }
 
-        bool SaveFavoritesToProjectConfig { get; set; }
+        bool SaveFavoritesToProjectConfig
+        {
+            get; set;
+        }
 
-        List<AssetConfig> Assets { get; }
+        List<AssetConfig> Assets
+        {
+            get;
+        }
 
-        List<AssetFavorite> Favorites { get; }
+        List<AssetFavorite> Favorites
+        {
+            get;
+        }
 
-        List<ContextPathOverride> ContextPathOverrides { get; }
+        List<ContextPathOverride> ContextPathOverrides
+        {
+            get;
+        }
 
-        List<ContextCustomGroup> ContextCustomGroups { get; }
+        List<ContextCustomGroup> ContextCustomGroups
+        {
+            get;
+        }
 
         void SaveToDisk();
     }

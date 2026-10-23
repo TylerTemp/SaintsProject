@@ -26,7 +26,9 @@ namespace SaintsProject.Editor
         private enum RuntimeFavoriteStatus
         {
             Default,
+
             DragExisted,
+
             DragNew,
         }
 
@@ -40,14 +42,15 @@ namespace SaintsProject.Editor
             public Texture Icon;
             public Rect Rect;
         }
+
         public void Invalidate() => _dirty = true;
+
         private void Refresh()
         {
             if (!_dirty && ReferenceEquals(_source, ProjectConfigStore.Favorites))
             {
                 return;
             }
-
             _dirty = false;
             _source = ProjectConfigStore.Favorites;
             _pressed = -1;
@@ -71,7 +74,6 @@ namespace SaintsProject.Editor
             {
                 EditorWindow.mouseOverWindow?.Repaint();
             }
-
             const float rowHeight = 22;
             float available = Mathf.Max(40, width - 24);
             Rect area = new Rect(0, 0, available, _height);
@@ -94,7 +96,6 @@ namespace SaintsProject.Editor
             {
                 _dragAssets.Clear();
             }
-
             List<FavoriteDrawingInfo> existsDrawingInfos = new List<FavoriteDrawingInfo>();
             Dictionary<Object, FavoriteDrawingInfo> existedDragging = new Dictionary<Object, FavoriteDrawingInfo>();
             for (int i = 0; i < _favorites.Count; i++)
@@ -108,17 +109,15 @@ namespace SaintsProject.Editor
                     case FavoriteIconType.Default:
                         icon = Util.GetIcon(appearance.icon);
                         if (!icon && asset)
-                        {
+                    {
                             icon = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset));
-                        }
-
+                    }
                         break;
                     case FavoriteIconType.UnityDefault:
                         if (asset)
-                        {
+                    {
                             icon = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset));
-                        }
-
+                    }
                         break;
                     case FavoriteIconType.Custom:
                         icon = Util.GetIcon(favorite.icon);
@@ -126,7 +125,6 @@ namespace SaintsProject.Editor
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-
                 string label = string.IsNullOrEmpty(favorite.alias) ? (asset ? asset.name : "Missing Asset") : favorite.alias;
                 GUIContent content = new GUIContent(label, asset ? AssetDatabase.GetAssetPath(asset) : favorite.guid);
                 float itemWidth = Mathf.Min(available - 16, GUI.skin.button.CalcSize(content).x + (icon ? 18 : 0) + 8);
@@ -145,10 +143,8 @@ namespace SaintsProject.Editor
                     existedDragging[asset] = info;
                     continue;
                 }
-
                 existsDrawingInfos.Add(info);
             }
-
             List<FavoriteDrawingInfo> draggingDrawingInfos = new List<FavoriteDrawingInfo>();
             foreach (Object asset in _dragAssets)
             {
@@ -161,7 +157,6 @@ namespace SaintsProject.Editor
                     {
                         icon = AssetDatabase.GetCachedIcon(path);
                     }
-
                     GUIContent content = new GUIContent(asset.name, path);
                     float itemWidth = Mathf.Min(available - 16, GUI.skin.button.CalcSize(content).x + (icon ? 18 : 0) + 8);
                     info = new FavoriteDrawingInfo
@@ -173,11 +168,9 @@ namespace SaintsProject.Editor
                         Rect = new Rect(0, 0, itemWidth, rowHeight - 2),
                     };
                 }
-
                 info.Status = exists ? RuntimeFavoriteStatus.DragExisted : RuntimeFavoriteStatus.DragNew;
                 draggingDrawingInfos.Add(info);
             }
-
             CalcRelativePos(existsDrawingInfos.Concat(draggingDrawingInfos), available, rowHeight);
             _dropIndex = -1;
             List<FavoriteDrawingInfo> favoriteDrawingInfos;
@@ -202,7 +195,6 @@ namespace SaintsProject.Editor
                             favoriteDrawingInfos.Add(favoriteDrawingInfo);
                             favoriteDrawingInfos.AddRange(draggingDrawingInfos);
                         }
-
                         // AddFavorites accepts an index in the saved list, before removing dragged entries.
                         _dropIndex = favoriteDrawingInfo.SavedIndex + (isPre ? 0 : 1);
                         inserted = true;
@@ -212,7 +204,6 @@ namespace SaintsProject.Editor
                         favoriteDrawingInfos.Add(favoriteDrawingInfo);
                     }
                 }
-
                 if (!inserted)
                 {
                     favoriteDrawingInfos.AddRange(draggingDrawingInfos);
@@ -223,7 +214,6 @@ namespace SaintsProject.Editor
             {
                 favoriteDrawingInfos = existsDrawingInfos;
             }
-
             float contentHeight = CalcRelativePos(favoriteDrawingInfos, available, rowHeight);
             // Match SaintsHierarchy: wrap favorites into rows and let the toolbar grow to fit them.
             float height = Mathf.Max(rowHeight + 2, contentHeight);
@@ -254,7 +244,6 @@ namespace SaintsProject.Editor
                     {
                         GUI.backgroundColor = appearance.color;
                     }
-
                     GUI.skin.button.Draw(rect, GUIContent.none, hover, !placeholder && _pressed == i, false, false);
                     GUI.backgroundColor = old;
                     Rect labelRect = new Rect(rect.x + 4, rect.y, rect.width - 8, rect.height);
@@ -263,21 +252,17 @@ namespace SaintsProject.Editor
                         GUI.DrawTexture(new Rect(labelRect.x, rect.y + 2, 16, 16), favoriteDrawingInfo.Icon, ScaleMode.ScaleToFit, true);
                         labelRect.xMin += 18;
                     }
-
                     GUI.Label(labelRect, favoriteDrawingInfo.Content, EditorStyles.label);
                 }
-
                 if (placeholder)
                 {
                     continue;
                 }
-
                 if (hover && (evt.type == EventType.ContextClick || (evt.type == EventType.MouseDown && evt.button == 0 && evt.alt)))
                 {
                     PopupWindow.Show(rect, new FavoriteConfigPopup(favorite));
                     evt.Use();
                 }
-
                 if (hover && evt.type == EventType.MouseDown && evt.button == 0)
                 {
                     _pressed = i;
@@ -285,7 +270,6 @@ namespace SaintsProject.Editor
                     _dragging = false;
                     evt.Use();
                 }
-
                 if (_pressed == i && !_dragging && evt.type == EventType.MouseDrag && asset && (evt.mousePosition - _pressPosition).sqrMagnitude > 25)
                 {
                     DragAndDrop.PrepareStartDrag();
@@ -297,7 +281,6 @@ namespace SaintsProject.Editor
                     _dragging = true;
                     evt.Use();
                 }
-
                 // ReSharper disable once InvertIf
                 if (_pressed == i && evt.type == EventType.MouseUp && evt.button == 0)
                 {
@@ -312,13 +295,11 @@ namespace SaintsProject.Editor
                             }
                         }
                     }
-
                     _pressed = -1;
                     _dragging = false;
                     evt.Use();
                 }
             }
-
             if (evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform)
             {
                 if (_dragAssets.Count > 0)
@@ -333,23 +314,19 @@ namespace SaintsProject.Editor
                         _dragging = false;
                         _dropIndex = -1;
                     }
-
                     evt.Use();
                 }
             }
-
             if (evt.type == EventType.DragExited)
             {
                 _pressed = -1;
                 _dragging = false;
                 _dropIndex = -1;
             }
-
             if (evt.type == EventType.Repaint)
             {
                 GUI.DrawTexture(new Rect(width - 16, 0, 16, 16), Util.GetIcon("fav.png"), ScaleMode.ScaleToFit, true);
             }
-
             return height;
         }
 
@@ -373,13 +350,10 @@ namespace SaintsProject.Editor
                     x = 2;
                     y += rowHeight;
                 }
-
                 info.Rect.position = new Vector2(x, y);
                 x += info.Rect.width + 2;
             }
-
             return y + rowHeight;
         }
-
     }
 }

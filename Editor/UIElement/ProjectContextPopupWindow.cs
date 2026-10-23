@@ -11,9 +11,18 @@ namespace SaintsProject.Editor.UIElement
     {
         internal EditorWindow Owner;
         internal ProjectBrowserContextMenu.Entry ParentEntry;
+
         // These collections always describe the same active view, including filtered results.
-        internal List<ProjectBrowserContextMenu.Entry> Entries { get; private set; }
-        internal List<ProjectContextMenuRow> Rows { get; private set; }
+        internal List<ProjectBrowserContextMenu.Entry> Entries
+        {
+            get; private set;
+        }
+
+        internal List<ProjectContextMenuRow> Rows
+        {
+            get; private set;
+        }
+
         internal int Selected = -1;
         internal int HoverGeneration;
         private ProjectPopupMenu _menu;
@@ -48,10 +57,10 @@ namespace SaintsProject.Editor.UIElement
             rootVisualElement.RegisterCallback<PointerLeaveEvent>(_ => _menu.LeaveWindow(this));
             rootVisualElement.RegisterCallback<PointerMoveEvent>(evt =>
             {
-                int row = Rows.FindIndex(element => element.worldBound.Contains(evt.position));
-                if (row >= 0 && (!Entries[row].Enabled || Entries[row].Separator))
+    int row = Rows.FindIndex(element => element.worldBound.Contains(evt.position));
+    if (row >= 0 && (!Entries[row].Enabled || Entries[row].Separator))
                 {
-                    _menu.Hover(this, row);
+        _menu.Hover(this, row);
                 }
             }, TrickleDown.TrickleDown);
             _scroll = new ScrollView(ScrollViewMode.Vertical)
@@ -72,9 +81,9 @@ namespace SaintsProject.Editor.UIElement
                 _searchRow.RegisterCallback<PointerEnterEvent>(_ => _menu.ClearSelection(this));
                 _searchRow.RegisterCallback<PointerMoveEvent>(_ =>
                 {
-                    if (Selected >= 0 || _menu.Levels.Count > 1)
+    if (Selected >= 0 || _menu.Levels.Count > 1)
                     {
-                        _menu.ClearSelection(this);
+        _menu.ClearSelection(this);
                     }
                 });
 
@@ -84,7 +93,6 @@ namespace SaintsProject.Editor.UIElement
                 _searchResults = new VisualElement();
                 _scroll.Add(_searchResults);
             }
-
             _originalRoot = new VisualElement();
             _scroll.Add(_originalRoot);
 
@@ -106,7 +114,6 @@ namespace SaintsProject.Editor.UIElement
                 _originalRoot.style.display = DisplayStyle.Flex;
                 return;
             }
-
             _originalRoot.style.display = DisplayStyle.None;
             _searchResults.style.display = DisplayStyle.Flex;
 
@@ -131,7 +138,6 @@ namespace SaintsProject.Editor.UIElement
                     endPointEntries.Add(foundEntity);
                 }
             }
-
             List<ProjectBrowserContextMenu.Entry> allEntities = new List<ProjectBrowserContextMenu.Entry>(endPointEntries);
             if (endPointEntries.Count > 0 && pathEntries.Count > 0)
             {
@@ -150,7 +156,6 @@ namespace SaintsProject.Editor.UIElement
                     Enabled = false,
                 });
             }
-
             List<ProjectContextMenuRow> resultRows = RenderEntries(allEntities, _searchResults);
             Entries = allEntities;
             Rows = resultRows;
@@ -172,34 +177,36 @@ namespace SaintsProject.Editor.UIElement
                 {
                     continue;
                 }
-
                 int index = i;
                 row.RegisterCallback<PointerEnterEvent>(_ =>
                 {
-                    if (IsCurrentRow(index, row) && entry.Enabled)
+    if (IsCurrentRow(index, row) && entry.Enabled)
                     {
-                        _menu.Hover(this, index);
+        _menu.Hover(this, index);
                     }
                 });
                 row.RegisterCallback<PointerMoveEvent>(_ =>
                 {
-                    if (IsCurrentRow(index, row) && entry.Enabled && Selected != index)
+    if (IsCurrentRow(index, row) && entry.Enabled && Selected != index)
                     {
-                        _menu.Hover(this, index);
+        _menu.Hover(this, index);
                     }
                 });
                 row.RegisterCallback<PointerLeaveEvent>(_ =>
                 {
-                    if (IsCurrentRow(index, row)) _menu.LeaveRow(this, index);
+    if (IsCurrentRow(index, row))
+                    {
+        _menu.LeaveRow(this, index);
+                    }
                 });
                 row.RegisterCallback<PointerUpEvent>(evt =>
                 {
-                    if (evt.button != 0 || !IsCurrentRow(index, row))
+    if (evt.button != 0 || !IsCurrentRow(index, row))
                     {
-                        return;
+        return;
                     }
-                    _menu.Activate(this, index);
-                    evt.StopPropagation();
+    _menu.Activate(this, index);
+    evt.StopPropagation();
                 });
             }
             return rows;
@@ -227,7 +234,6 @@ namespace SaintsProject.Editor.UIElement
 #endif
                 return;
             }
-
             if (_searchRow != null && evt.target is VisualElement target &&
                 (target == _searchRow || _searchRow.Contains(target)))
             {
@@ -237,7 +243,10 @@ namespace SaintsProject.Editor.UIElement
                     (evt.keyCode == KeyCode.UpArrow || evt.keyCode == KeyCode.DownArrow ||
                      Selected >= 0 && (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter));
                 // Escape dismisses the whole menu even while editing the search field.
-                if (evt.keyCode != KeyCode.Escape && !navigateResults) return;
+                if (evt.keyCode != KeyCode.Escape && !navigateResults)
+                {
+                    return;
+                }
             }
             _menu.Key(this, evt);
         }
@@ -263,12 +272,10 @@ namespace SaintsProject.Editor.UIElement
             {
                 return null;
             }
-
             if (leftTokens.Count == 0)
             {
                 return entity;
             }
-
             string curSegPath = entity.DisplayPath ?? entity.Path ?? entity.Label ?? "";
             for (int indexRev = leftTokens.Count - 1; indexRev >= 0; indexRev--)
             {
@@ -278,17 +285,14 @@ namespace SaintsProject.Editor.UIElement
                     leftTokens.RemoveAt(indexRev);
                 }
             }
-
             if (leftTokens.Count == 0)
             {
                 return entity;
             }
-
             if (entity.Children.Count == 0)
             {
                 return null;
             }
-
             List<ProjectBrowserContextMenu.Entry> children = entity.Children
                 .Select(each => GetMatchedPathEntity(each, leftTokens.ToList()))
                 .Where(each => each != null)
@@ -303,12 +307,10 @@ namespace SaintsProject.Editor.UIElement
                 result.Label = entity.Label + "/" + match.Label;
                 return result;
             }
-
             if (children.Count > 0)
             {
                 return entity.NewChildren(children);
             }
-
             return null;
         }
 
@@ -323,7 +325,8 @@ namespace SaintsProject.Editor.UIElement
                 // ReSharper disable once InvertIf
                 if (!Entries[index].Separator && Entries[index].Enabled)
                 {
-                    Select(index); return;
+                    Select(index);
+                    return;
                 }
             }
         }

@@ -22,7 +22,10 @@ namespace SaintsProject.Editor.Config
         internal static List<ContextPathOverride> Move(IEnumerable<ContextPathOverride> overrides,
             ContextMenuNode node, ContextMenuNode parent)
         {
-            ContextPathOverride value = node.AppliedOverride ?? new ContextPathOverride { targetId = node.Id };
+            ContextPathOverride value = node.AppliedOverride ?? new ContextPathOverride
+            {
+                targetId = node.Id
+            };
             value.overrideParent = parent.Id != node.OriginalParentId;
             value.parentId = value.overrideParent ? parent.Id : null;
             return WithOverride(overrides, value);
@@ -44,11 +47,17 @@ namespace SaintsProject.Editor.Config
         {
             updatedOverrides = overrides.ToList();
             updatedGroups = groups.ToList();
-            if (!CanDeleteGroup(node, updatedOverrides, updatedGroups)) return false;
+            if (!CanDeleteGroup(node, updatedOverrides, updatedGroups))
+            {
+                return false;
+            }
             updatedGroups = updatedGroups.Select(group =>
             {
-                if (group.id == node.Id) group.name = name;
-                return group;
+    if (group.id == node.Id)
+                {
+        group.name = name;
+                }
+    return group;
             }).ToList();
             // Replace legacy rename overrides with the custom group's actual name.
             ContextPathOverride value = updatedOverrides.LastOrDefault(item => item.targetId == node.Id);
@@ -64,33 +73,49 @@ namespace SaintsProject.Editor.Config
         {
             remainingOverrides = overrides.ToList();
             remainingGroups = groups.ToList();
-            if (!CanDeleteGroup(node, remainingOverrides, remainingGroups)) return false;
-
+            if (!CanDeleteGroup(node, remainingOverrides, remainingGroups))
+            {
+                return false;
+            }
             HashSet<string> contents = new HashSet<string>(StringComparer.Ordinal);
             Collect(node);
             Dictionary<string, ContextCustomGroup> definitions = remainingGroups
                 .GroupBy(group => group.id).ToDictionary(group => group.Key, group => group.Last(), StringComparer.Ordinal);
-            HashSet<string> removed = new HashSet<string>(StringComparer.Ordinal) { node.Id };
+            HashSet<string> removed = new HashSet<string>(StringComparer.Ordinal)
+            {
+node.Id
+            };
             bool changed;
             do
             {
                 changed = false;
                 foreach (ContextCustomGroup group in remainingGroups)
-                    if (contents.Contains(group.id) && removed.Contains(group.parentId)) changed |= removed.Add(group.id);
+                {
+                    if (contents.Contains(group.id) && removed.Contains(group.parentId))
+                    {
+                        changed |= removed.Add(group.id);
+                    }
+                }
             } while (changed);
 
             // Keep groups that were independently moved out. Their default parent
             // must bypass deleted containers so Restore remains usable later.
             remainingGroups = remainingGroups.Where(group => !removed.Contains(group.id)).Select(group =>
             {
-                while (removed.Contains(group.parentId)) group.parentId = definitions[group.parentId].parentId;
-                return group;
+    while (removed.Contains(group.parentId))
+                {
+        group.parentId = definitions[group.parentId].parentId;
+                }
+    return group;
             }).ToList();
 
             List<ContextPathOverride> updated = new List<ContextPathOverride>();
             foreach (ContextPathOverride original in remainingOverrides)
             {
-                if (removed.Contains(original.targetId)) continue;
+                if (removed.Contains(original.targetId))
+                {
+                    continue;
+                }
                 ContextPathOverride value = original;
                 // Also clean inactive/missing commands referencing a deleted group,
                 // even though those commands are absent from the resolved tree.
@@ -103,7 +128,10 @@ namespace SaintsProject.Editor.Config
                     value.newName = customName;
                     updated = WithOverride(updated, value);
                 }
-                else updated.Add(value);
+                else
+                {
+                    updated.Add(value);
+                }
             }
             remainingOverrides = updated;
             return true;
@@ -111,7 +139,10 @@ namespace SaintsProject.Editor.Config
             void Collect(ContextMenuNode current)
             {
                 contents.Add(current.Id);
-                foreach (ContextMenuNode child in current.Children) Collect(child);
+                foreach (ContextMenuNode child in current.Children)
+                {
+                    Collect(child);
+                }
             }
         }
 
@@ -122,7 +153,9 @@ namespace SaintsProject.Editor.Config
             // Custom definitions are parsed before placement overrides are applied.
             for (int suffix = 2; tree.ById.Values.Any(node => node.Parent == parent && node.Name == name
                 || node.OriginalParentId == parent.Id && node.OriginalName == name); suffix++)
+            {
                 name = "New Group " + suffix;
+            }
             ContextCustomGroup group = ContextCustomGroup.Create(name, parent.Id);
             group.priority = parent.Children.Count == 0 ? 0 : parent.Children.Max(child => child.Priority);
             return group;

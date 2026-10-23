@@ -41,34 +41,26 @@ namespace SaintsProject.Editor
         {
             "d_SceneAsset Icon",
             "SceneAsset Icon",
-
             PrefabIcon,
             PrefabIconOld,
-
             "d_Mesh Icon",
             "Mesh Icon",
-
             "d_Material Icon",
             "Material Icon",
-
             "d_Texture Icon",
             "Texture Icon",
-
             CsScriptIcon,
             CsScriptIconOld,
-
             ShaderIcon,
             ShaderIconOld,
-
             "d_ComputeShader Icon",
             "ComputeShader Icon",
-
             "d_ShaderInclude Icon",
             "ShaderInclude Icon",
-
             ScriptableObjectIcon,
             ScriptableObjectIconOld,
         };
+
         static FolderContents()
         {
             EditorApplication.projectChanged += Invalidate;
@@ -87,7 +79,6 @@ namespace SaintsProject.Editor
             {
                 return cached;
             }
-
             if (!_indexed)
             {
                 foreach (string path in AssetDatabase.GetAllAssetPaths())
@@ -97,27 +88,22 @@ namespace SaintsProject.Editor
                     {
                         continue;
                     }
-
                     string parent = path[..slash];
                     if (!Children.TryGetValue(parent, out List<string> children))
                     {
                         children = new List<string>();
                         Children.Add(parent, children);
                     }
-
                     children.Add(path);
                 }
-
                 _indexed = true;
             }
-
             Summary result = new Summary();
             Cache.Add(folder, result);
             if (!Children.TryGetValue(folder, out List<string> files))
             {
                 return result;
             }
-
             Texture2D common = null;
             bool mixed = false;
             bool containsSpineSkeletonData = false;
@@ -130,19 +116,16 @@ namespace SaintsProject.Editor
                 {
                     continue;
                 }
-
                 Type type = AssetDatabase.GetMainAssetTypeAtPath(path);
                 if (type == null)
                 {
                     continue;
                 }
-
 #if SAINTSPROJECT_SPINE_UNITY
                 if (typeof(Spine.Unity.SkeletonDataAsset).IsAssignableFrom(type))
                 {
                     containsSpineSkeletonData = true;
                 }
-
                 if (typeof(Spine.Unity.SpineAtlasAsset).IsAssignableFrom(type))
                 {
                     containsSpineAtlas = true;
@@ -158,13 +141,11 @@ namespace SaintsProject.Editor
                 {
                     mixed = true;
                 }
-
                 if (icon != null && !result.Icons.Contains(icon))
                 {
                     result.Icons.Add(icon);
                 }
             }
-
             if (mixed)
             {
 #if SAINTSPROJECT_SPINE_UNITY
@@ -178,7 +159,6 @@ namespace SaintsProject.Editor
             {
                 result.AutoIcon = common;
             }
-
             foreach (Texture2D texture2D in result.Icons.ToArray())
             {
                 if (texture2D.name.Contains(CsScriptIcon) || texture2D.name.Contains(CsScriptIconOld))
@@ -186,22 +166,19 @@ namespace SaintsProject.Editor
                     result.Icons.RemoveAll(each =>
                         each.name is "AssemblyDefinitionAsset Icon" or "d_AssemblyDefinitionAsset Icon");
                 }
-
                 if (texture2D.name.Contains(ShaderIcon) || texture2D.name.Contains(ShaderIconOld))
                 {
                     result.Icons.RemoveAll(each =>
                         each.name is "ShaderInclude Icon" or "d_ShaderInclude Icon");
                 }
             }
-
-
             result.Icons.Sort((a, b) =>
             {
-                int ai = Array.IndexOf(Order, a.name);
-                int bi = Array.IndexOf(Order, b.name);
-                ai = ai < 0 ? Order.Length : ai;
-                bi = bi < 0 ? Order.Length : bi;
-                return ai == bi ? string.CompareOrdinal(a.name, b.name) : ai.CompareTo(bi);
+    int ai = Array.IndexOf(Order, a.name);
+    int bi = Array.IndexOf(Order, b.name);
+    ai = ai < 0 ? Order.Length : ai;
+    bi = bi < 0 ? Order.Length : bi;
+    return ai == bi ? string.CompareOrdinal(a.name, b.name) : ai.CompareTo(bi);
             });
             return result;
         }
@@ -212,18 +189,15 @@ namespace SaintsProject.Editor
             {
                 return Util.LoadIconContent(TextureIcon);
             }
-
             if (type == typeof(GameObject))
             {
                 return Util.LoadIconContent(PrefabIcon);
             }
-
             string extension = Path.GetExtension(path);
             if (type == typeof(MonoScript) || extension == ".asmdef" || extension == ".asmref")
             {
                 return Util.LoadIconContent(CsScriptIcon);
             }
-
             if (type == typeof(VisualTreeAsset) || extension == ".uxml")
             {
                 return Util.LoadIconContent("d_VisualTreeAsset Icon");
@@ -232,7 +206,6 @@ namespace SaintsProject.Editor
             {
                 return Util.LoadIconContent("d_StyleSheet Icon");
             }
-
 #if USE_WWISE
             if (type == typeof(WwiseEventReference))
             {
@@ -262,17 +235,14 @@ namespace SaintsProject.Editor
             {
                 return icon;
             }
-
             if (typeof(ScriptableObject).IsAssignableFrom(type))
             {
                 return Util.LoadIconContent(ScriptableObjectIcon);
             }
-
             if (type == typeof(DefaultAsset) || type == typeof(TextAsset))
             {
                 return null;
             }
-
             // return icon.name.StartsWith("d_", StringComparison.Ordinal) ? icon.name.Substring(2) : icon.name;
             return null;
         }

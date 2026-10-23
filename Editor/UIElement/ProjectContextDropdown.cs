@@ -11,7 +11,9 @@ namespace SaintsProject.Editor.UIElement
     internal sealed class ProjectContextDropdown
     {
         private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+
         internal static bool Supported => Supports(typeof(GenericDropdownMenu));
+
         internal static bool Supports(Type type) => type.GetField("m_MenuContainer", Flags)?.FieldType == typeof(VisualElement)
             && type.GetField("m_ScrollView", Flags)?.FieldType == typeof(ScrollView)
             && type.GetMethod("OnFocusOut", Flags) != null
@@ -50,13 +52,23 @@ namespace SaintsProject.Editor.UIElement
             _root.RegisterCallback<FocusOutEvent>(OnFocusOut);
             _root.RegisterCallback<DetachFromPanelEvent>(OnDetach);
             EditorApplication.update += CheckWindow;
-            try { OpenLevel(_entries, _position, null); }
-            catch { Close(); throw; }
+            try
+            {
+                OpenLevel(_entries, _position, null);
+            }
+            catch
+            {
+                Close();
+                throw;
+            }
         }
 
         internal void Close()
         {
-            if (_closed) return;
+            if (_closed)
+            {
+                return;
+            }
             _closed = true;
             CloseFrom(0);
             _root.UnregisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
@@ -67,18 +79,29 @@ namespace SaintsProject.Editor.UIElement
 
         private void CheckWindow()
         {
-            if (!_window || !_window.hasFocus || _root.panel == null || _levels.Count == 0 || _levels[0].Container.panel == null) Close();
+            if (!_window || !_window.hasFocus || _root.panel == null || _levels.Count == 0 || _levels[0].Container.panel == null)
+            {
+                Close();
+            }
         }
 
         private void OnDetach(DetachFromPanelEvent evt)
         {
-            if (evt.target == _root) Close();
+            if (evt.target == _root)
+            {
+                Close();
+            }
         }
 
         private void OnPointerDown(PointerDownEvent evt)
         {
             foreach (Level level in _levels)
-                if (level.Outer.worldBound.Contains(evt.position)) return;
+            {
+                if (level.Outer.worldBound.Contains(evt.position))
+                {
+                    return;
+                }
+            }
             Close();
         }
 
@@ -86,11 +109,19 @@ namespace SaintsProject.Editor.UIElement
         {
             _root.schedule.Execute(() =>
             {
-                if (_closed) return;
-                VisualElement focused = _root.focusController?.focusedElement as VisualElement;
-                foreach (Level level in _levels)
-                    if (focused != null && level.Container.Contains(focused)) return;
-                Close();
+    if (_closed)
+                {
+        return;
+                }
+    VisualElement focused = _root.focusController?.focusedElement as VisualElement;
+    foreach (Level level in _levels)
+                {
+        if (focused != null && level.Container.Contains(focused))
+                    {
+            return;
+                    }
+                }
+    Close();
             });
         }
 
@@ -100,13 +131,20 @@ namespace SaintsProject.Editor.UIElement
             {
                 Level level = _levels[_levels.Count - 1];
                 _levels.RemoveAt(_levels.Count - 1);
-                typeof(GenericDropdownMenu).GetMethod("Hide", Flags).Invoke(level.Menu, new object[] { false });
+                typeof(GenericDropdownMenu).GetMethod("Hide", Flags).Invoke(level.Menu, new object[]
+                {
+false
+                });
             }
         }
 
         private void OpenLevel(List<ProjectBrowserContextMenu.Entry> entries, Vector2 position, ProjectBrowserContextMenu.Entry parent)
         {
-            Level level = new Level { Menu = new GenericDropdownMenu(), Parent = parent };
+            Level level = new Level
+            {
+                Menu = new GenericDropdownMenu(),
+                Parent = parent
+            };
             int depth = _levels.Count;
             foreach (ProjectBrowserContextMenu.Entry entry in entries)
             {
@@ -116,16 +154,28 @@ namespace SaintsProject.Editor.UIElement
                     continue;
                 }
                 int previousCount = level.Menu.contentContainer.childCount;
-                if (!entry.Enabled) level.Menu.AddDisabledItem(entry.Label, entry.Checked);
-                else level.Menu.AddItem(entry.Label, entry.Checked, () => Activate(level, entry));
-                if (level.Menu.contentContainer.childCount == previousCount) continue;
+                if (!entry.Enabled)
+                {
+                    level.Menu.AddDisabledItem(entry.Label, entry.Checked);
+                }
+                else
+                {
+                    level.Menu.AddItem(entry.Label, entry.Checked, () => Activate(level, entry));
+                }
+                if (level.Menu.contentContainer.childCount == previousCount)
+                {
+                    continue;
+                }
                 VisualElement row = level.Menu.contentContainer[level.Menu.contentContainer.childCount - 1];
                 level.Rows.Add(row);
                 level.Entries.Add(entry);
                 // Shortcut and submenu markers occupy the native menu's right-hand column.
                 if (entry.Children.Count > 0 || !string.IsNullOrEmpty(entry.Shortcut))
                 {
-                    Label suffix = new Label(entry.Children.Count > 0 ? "›" : entry.Shortcut) { pickingMode = PickingMode.Ignore };
+                    Label suffix = new Label(entry.Children.Count > 0 ? "›" : entry.Shortcut)
+                    {
+                        pickingMode = PickingMode.Ignore
+                    };
                     suffix.style.marginLeft = 24;
                     suffix.style.marginRight = 6;
                     suffix.style.unityTextAlign = TextAnchor.MiddleRight;
@@ -137,19 +187,33 @@ namespace SaintsProject.Editor.UIElement
                 }
                 row.RegisterCallback<PointerEnterEvent>(_ =>
                 {
-                    if (!entry.Enabled) return;
-                    row.schedule.Execute(() =>
+    if (!entry.Enabled)
                     {
-                        if (_closed || row.panel == null || depth >= _levels.Count || _levels[depth] != level) return;
-                        // Cancel an old hover request when the pointer has moved to another row.
-                        int selected = (int)typeof(GenericDropdownMenu).GetMethod("GetSelectedIndex", Flags).Invoke(level.Menu, null);
-                        if (selected < 0 || selected >= level.Rows.Count || level.Rows[selected] != row) return;
-                        if (entry.Children.Count > 0) OpenChild(level, entry, row);
-                        else CloseFrom(depth + 1);
+        return;
+                    }
+    row.schedule.Execute(() =>
+                    {
+    if (_closed || row.panel == null || depth >= _levels.Count || _levels[depth] != level)
+                        {
+        return;
+                        }
+    // Cancel an old hover request when the pointer has moved to another row.
+    int selected = (int)typeof(GenericDropdownMenu).GetMethod("GetSelectedIndex", Flags).Invoke(level.Menu, null);
+    if (selected < 0 || selected >= level.Rows.Count || level.Rows[selected] != row)
+                        {
+        return;
+                        }
+    if (entry.Children.Count > 0)
+                        {
+        OpenChild(level, entry, row);
+                        }
+    else
+                        {
+        CloseFrom(depth + 1);
+                        }
                     }).StartingIn(150);
                 });
             }
-
             level.Container = (VisualElement)typeof(GenericDropdownMenu).GetField("m_MenuContainer", Flags).GetValue(level.Menu);
             ScrollView scroll = (ScrollView)typeof(GenericDropdownMenu).GetField("m_ScrollView", Flags).GetValue(level.Menu);
             level.Outer = scroll.parent;
@@ -167,9 +231,15 @@ namespace SaintsProject.Editor.UIElement
 
         private void Activate(Level level, ProjectBrowserContextMenu.Entry entry)
         {
-            if (_closed || !entry.Enabled) return;
+            if (_closed || !entry.Enabled)
+            {
+                return;
+            }
             int index = level.Entries.IndexOf(entry);
-            if (entry.Children.Count > 0) OpenChild(level, entry, level.Rows[index]);
+            if (entry.Children.Count > 0)
+            {
+                OpenChild(level, entry, level.Rows[index]);
+            }
             else
             {
                 Close();
@@ -180,7 +250,10 @@ namespace SaintsProject.Editor.UIElement
         private void OpenChild(Level level, ProjectBrowserContextMenu.Entry entry, VisualElement row)
         {
             int depth = _levels.IndexOf(level) + 1;
-            if (depth < _levels.Count && _levels[depth].Parent == entry) return;
+            if (depth < _levels.Count && _levels[depth].Parent == entry)
+            {
+                return;
+            }
             CloseFrom(depth);
             OpenLevel(entry.Children, new Vector2(level.Outer.worldBound.xMax, row.worldBound.yMin), entry);
         }
@@ -206,10 +279,16 @@ namespace SaintsProject.Editor.UIElement
                 if (selected >= 0 && selected < level.Entries.Count)
                 {
                     ProjectBrowserContextMenu.Entry entry = level.Entries[selected];
-                    if (evt.keyCode != KeyCode.RightArrow || entry.Children.Count > 0) Activate(level, entry);
+                    if (evt.keyCode != KeyCode.RightArrow || entry.Children.Count > 0)
+                    {
+                        Activate(level, entry);
+                    }
                 }
             }
-            else return;
+            else
+            {
+                return;
+            }
             evt.StopImmediatePropagation();
             evt.PreventDefault();
         }

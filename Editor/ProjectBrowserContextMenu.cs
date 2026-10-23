@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using SaintsProject.Editor.Config;
 using SaintsProject.Editor.UIElement;
+using SaintsProject.Editor.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,7 +13,12 @@ namespace SaintsProject.Editor
     internal sealed class ProjectBrowserContextMenu
     {
         private const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
-        internal static bool Enabled { get; private set; }
+
+        internal static bool Enabled
+        {
+            get; private set;
+        }
+
         private static bool _sampled;
         private readonly EditorWindow _window;
         private ProjectPopupMenu _dropdown;
@@ -86,7 +92,6 @@ namespace SaintsProject.Editor
                 original();
                 return;
             }
-
             // MouseDown has already selected the clicked item/active folder through Unity's code.
             bool listVisible = Convert.ToInt32(
                                   Get(_window, "m_ViewMode")) == 1
@@ -107,7 +112,6 @@ namespace SaintsProject.Editor
                 original();
                 return;
             }
-
             // Install only for this draw, after Unity's own tree selection handling and before its popup callback.
             List<Action> restore = new List<Action>();
             try
@@ -117,10 +121,12 @@ namespace SaintsProject.Editor
             }
             catch
             {
-                for (int i = restore.Count - 1; i >= 0; i--) restore[i]();
+                for (int i = restore.Count - 1; i >= 0; i--)
+                {
+                    restore[i]();
+                }
                 throw;
             }
-
             try
             {
                 original();
@@ -147,17 +153,21 @@ namespace SaintsProject.Editor
             {
                 Type idType = previous.GetType().GetGenericArguments()[0];
                 MethodInfo factory = GetType().GetMethod(nameof(ItemCallback), Flags)!.MakeGenericMethod(idType);
-                Delegate installed = (Delegate)factory.Invoke(this, new[] { previous, folders, tree });
+                Delegate installed = (Delegate)factory.Invoke(this, new[]
+                {
+previous,
+folders,
+tree
+                });
                 callback.SetValue(tree, installed);
                 restore.Add(() =>
                 {
-                    if (Equals(callback.GetValue(tree), installed))
+    if (Equals(callback.GetValue(tree), installed))
                     {
-                        callback.SetValue(tree, previous);
+        callback.SetValue(tree, previous);
                     }
                 });
             }
-
             PropertyInfo outside = tree.GetType().GetProperty("contextClickOutsideItemsCallback", Flags);
             if (!folders
                 && outside?.GetValue(tree) is Action oldOutside
@@ -173,9 +183,9 @@ namespace SaintsProject.Editor
                 outside.SetValue(tree, installed);
                 restore.Add(() =>
                 {
-                    if (Equals(outside.GetValue(tree), installed))
+    if (Equals(outside.GetValue(tree), installed))
                     {
-                        outside.SetValue(tree, oldOutside);
+        outside.SetValue(tree, oldOutside);
                     }
                 });
             }
@@ -185,52 +195,62 @@ namespace SaintsProject.Editor
         {
             bool handled = TryReplace(() =>
             {
-                // Unity clears the one-column tree selection before validating its blank-area menu.
-                Array treeSelection = (Array)Call(tree, "GetSelection");
-                if (treeSelection == null)
+    // Unity clears the one-column tree selection before validating its blank-area menu.
+    Array treeSelection = (Array)Call(tree, "GetSelection");
+    if (treeSelection == null)
                 {
-                    throw new MissingMemberException("Tree selection");
+        throw new MissingMemberException("Tree selection");
                 }
-
-                if (treeSelection.Length == 0)
+    if (treeSelection.Length == 0)
                 {
-                    return show();
+        return show();
                 }
-
-                treeSelection = (Array)treeSelection.Clone();
-                PropertyInfo selection = typeof(Selection).GetProperty("entityIds", Flags)
-                                         ?? typeof(Selection).GetProperty("instanceIDs", Flags);
-                PropertyInfo active = typeof(Selection).GetProperty("activeEntityId", Flags)
-                                      ?? typeof(Selection).GetProperty("activeInstanceID", Flags);
-                Array globalSelection = (Array)(selection?.GetValue(null) as Array)?.Clone();
-                object activeId = active?.GetValue(null);
-                MethodInfo restoreGlobal = typeof(Selection).GetMethod(
-                    selection?.Name == "entityIds" ? "SetSelectionWithActiveEntityId" : "SetSelectionWithActiveInstanceID",
-                    Flags);
-                MethodInfo restoreTree = tree.GetType().GetMethod(
-                    "SetSelection",
-                    Flags,
-                    null,
-                    new[] { treeSelection.GetType(), typeof(bool) },
-                    null
-                );
-                if (globalSelection == null || activeId == null || restoreGlobal == null || restoreTree == null)
+    treeSelection = (Array)treeSelection.Clone();
+    PropertyInfo selection = typeof(Selection).GetProperty("entityIds", Flags)
+                             ?? typeof(Selection).GetProperty("instanceIDs", Flags);
+    PropertyInfo active = typeof(Selection).GetProperty("activeEntityId", Flags)
+                          ?? typeof(Selection).GetProperty("activeInstanceID", Flags);
+    Array globalSelection = (Array)(selection?.GetValue(null) as Array)?.Clone();
+    object activeId = active?.GetValue(null);
+    MethodInfo restoreGlobal = typeof(Selection).GetMethod(
+        selection?.Name == "entityIds" ? "SetSelectionWithActiveEntityId" : "SetSelectionWithActiveInstanceID",
+        Flags);
+    MethodInfo restoreTree = tree.GetType().GetMethod(
+        "SetSelection",
+        Flags,
+        null,
+        new[]
                 {
-                    throw new MissingMemberException("Selection restoration");
+treeSelection.GetType(),
+typeof(bool)
+                },
+        null
+    );
+    if (globalSelection == null || activeId == null || restoreGlobal == null || restoreTree == null)
+                {
+        throw new MissingMemberException("Selection restoration");
                 }
-                bool ready = false;
-                try
+    bool ready = false;
+    try
                 {
-                    ClearTreeSelection(tree);
-                    ready = show();
-                    return ready;
+        ClearTreeSelection(tree);
+        ready = show();
+        return ready;
                 }
-                finally
+    finally
                 {
-                    if (!ready)
+        if (!ready)
                     {
-                        restoreTree.Invoke(tree, new object[] { treeSelection, false });
-                        restoreGlobal.Invoke(null, new[] { globalSelection, activeId });
+            restoreTree.Invoke(tree, new object[]
+                        {
+treeSelection,
+false
+                        });
+            restoreGlobal.Invoke(null, new[]
+                        {
+globalSelection,
+activeId
+                        });
                     }
                 }
             });
@@ -249,45 +269,44 @@ namespace SaintsProject.Editor
             Action<T> native = (Action<T>)previous;
             return id =>
             {
-                if (!folders && EqualityComparer<T>.Default.Equals(id, default))
+    if (!folders && EqualityComparer<T>.Default.Equals(id, default))
                 {
-                    // Nonselectable assets intentionally have no menu in Unity's normal tree.
-                    if (TryReplace(() =>
-                        {
-                            ClearTreeSelection(tree);
-                            return true;
-                        }))
+        // Nonselectable assets intentionally have no menu in Unity's normal tree.
+        if (TryReplace(() =>
                     {
-                        Event.current.Use();
-                    }
-                    else
+    ClearTreeSelection(tree);
+    return true;
+                    }))
                     {
-                        native(id);
+            Event.current.Use();
                     }
-
-                    return;
+        else
+                    {
+            native(id);
+                    }
+        return;
                 }
-                bool handled = TryReplace(() =>
+    bool handled = TryReplace(() =>
                 {
-                    if (folders
-                        && string.Equals(
-                            Call(_window.GetType(), "GetItemType", id)?.ToString(),
-                            "SavedFilter",
-                            StringComparison.Ordinal
-                        )
-                    )
+    if (folders
+            && string.Equals(
+                Call(_window.GetType(), "GetItemType", id)?.ToString(),
+                "SavedFilter",
+                StringComparison.Ordinal
+            )
+        )
                     {
-                        return TryShowSavedFilter(id);
+        return TryShowSavedFilter(id);
                     }
-                    return TryShowAssets(folders);
+    return TryShowAssets(folders);
                 });
-                if (handled)
+    if (handled)
                 {
-                    Event.current.Use();
+        Event.current.Use();
                 }
-                else
+    else
                 {
-                    native(id);
+        native(id);
                 }
             };
         }
@@ -297,44 +316,53 @@ namespace SaintsProject.Editor
             Array selected = (Array)Call(tree, "GetSelection");
             if (selected == null)
             {
-
-
+                return;
             }
             if (selected.Length == 0)
             {
                 return;
             }
-
             Array empty = Array.CreateInstance(selected.GetType().GetElementType(), 0);
-            MethodInfo setSelection = tree.GetType().GetMethod("SetSelection", Flags, null, new[] { empty.GetType(), typeof(bool) }, null);
+            MethodInfo setSelection = tree.GetType().GetMethod("SetSelection", Flags, null, new[]
+            {
+empty.GetType(),
+typeof(bool)
+            }, null);
             MethodInfo notify = _window.GetType().GetMethod("AssetTreeSelectionCallback", Flags);
             if (setSelection == null || notify == null)
             {
                 throw new MissingMemberException("Tree selection callbacks");
             }
-            setSelection.Invoke(tree, new object[] { empty, false });
-            notify.Invoke(_window, new object[] { empty });
+            setSelection.Invoke(tree, new object[]
+            {
+empty,
+false
+            });
+            notify.Invoke(_window, new object[]
+            {
+empty
+            });
         }
 
         private bool TryShowAssets(bool folders)
         {
             return TryReplace(() =>
             {
-                // A mode can replace the native Assets menu independently of its registered commands.
-                Type mode = typeof(EditorWindow).Assembly.GetType("UnityEditor.ModeService");
-                if ((bool)(Call(mode, "HasContextMenu", "Assets/") ?? false))
+    // A mode can replace the native Assets menu independently of its registered commands.
+    Type mode = typeof(EditorWindow).Assembly.GetType("UnityEditor.ModeService");
+    if ((bool)(Call(mode, "HasContextMenu", "Assets/") ?? false))
                 {
-                    return false;
+        return false;
                 }
-                PropertyInfo safeMode = typeof(EditorUtility).GetProperty("isInSafeMode", Flags);
-                if ((bool)(safeMode?.GetValue(null) ?? false) && Selection.objects.Length == 0)
+    PropertyInfo safeMode = typeof(EditorUtility).GetProperty("isInSafeMode", Flags);
+    if ((bool)(safeMode?.GetValue(null) ?? false) && Selection.objects.Length == 0)
                 {
-                    return false;
+        return false;
                 }
-                List<Entry> entries = ReadAssets(_window, folders);
-                // An intentionally empty resolved menu must not expose hidden commands
-                // again by falling back to Unity's original menu.
-                return entries.Count == 0 || Show(entries);
+    List<Entry> entries = ReadAssets(_window, folders);
+    // An intentionally empty resolved menu must not expose hidden commands
+    // again by falling back to Unity's original menu.
+    return entries.Count == 0 || Show(entries);
             });
         }
 
@@ -372,8 +400,17 @@ namespace SaintsProject.Editor
                 List<Entry> result = new List<Entry>();
                 foreach (ContextMenuNode node in parent.Children)
                 {
-                    if (!node.IsVisible) continue;
-                    if (node.SeparatorBefore) result.Add(new Entry { Separator = true });
+                    if (!node.IsVisible)
+                    {
+                        continue;
+                    }
+                    if (node.SeparatorBefore)
+                    {
+                        result.Add(new Entry
+                        {
+                            Separator = true
+                        });
+                    }
                     bool commandNode = node.Kind == ContextMenuNodeKind.Command;
                     Entry entry = new Entry
                     {
@@ -392,10 +429,9 @@ namespace SaintsProject.Editor
                             break;
                         case ContextPathPrefixType.TexturePath:
                             if (!string.IsNullOrEmpty(node.Prefix.TexturePath))
-                            {
-                                entry.PrefixIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(node.Prefix.TexturePath)
-                                    ?? EditorGUIUtility.Load(node.Prefix.TexturePath) as Texture2D;
-                            }
+                        {
+                                entry.PrefixIcon = Util.LoadResource<Texture2D>(node.Prefix.TexturePath);
+                        }
                             break;
                         case ContextPathPrefixType.Text:
                             entry.PrefixText = node.Prefix.Text;
@@ -403,31 +439,33 @@ namespace SaintsProject.Editor
                     }
                     entry.Children.AddRange(CreateEntries(node));
                     result.Add(entry);
-                    if (!commandNode) continue;
-
+                    if (!commandNode)
+                    {
+                        continue;
+                    }
                     // Execution always uses the original command identity, even when
                     // the row has been renamed or moved into a custom group.
                     string command = node.SourcePath;
                     entry.Execute = () =>
                     {
-                        if (!window || !SameSelection(selection, selectionProperty.GetValue(null) as Array))
+    if (!window || !SameSelection(selection, selectionProperty.GetValue(null) as Array))
                         {
-                            return;
+        return;
                         }
-                        window.Focus();
-                        Call(window, "SetAsLastInteractedProjectBrowser");
-                        bool wasFolderContext = (bool)(Get(window, "isFolderTreeViewContextClicked") ?? false);
-                        try
+    window.Focus();
+    Call(window, "SetAsLastInteractedProjectBrowser");
+    bool wasFolderContext = (bool)(Get(window, "isFolderTreeViewContextClicked") ?? false);
+    try
                         {
-                            Set(window, "isFolderTreeViewContextClicked", folders);
-                            if (Menu.GetEnabled(command))
+        Set(window, "isFolderTreeViewContextClicked", folders);
+        if (Menu.GetEnabled(command))
                             {
-                                EditorApplication.ExecuteMenuItem(command);
+            EditorApplication.ExecuteMenuItem(command);
                             }
                         }
-                        finally
+    finally
                         {
-                            Set(window, "isFolderTreeViewContextClicked", wasFolderContext);
+        Set(window, "isFolderTreeViewContextClicked", wasFolderContext);
                         }
                     };
                 }
@@ -481,13 +519,19 @@ namespace SaintsProject.Editor
             MethodInfo rootId = filters.GetMethod("GetRootFilterId", Flags) ?? filters.GetMethod("GetRootInstanceID", Flags)
                                 ?? throw new MissingMethodException(filters.FullName, "GetRootFilterId / GetRootInstanceID");
             Type mapping = typeof(EditorWindow).Assembly.GetType("UnityEditor.FavoritesEntityIds");
-            if (mapping != null) filterId = Call(Get(mapping, "instance"), "GetIdFor", id)
+            if (mapping != null)
+            {
+                filterId = Call(Get(mapping, "instance"), "GetIdFor", id)
                                           ?? throw new MissingMemberException("FavoritesEntityIds.GetIdFor");
+            }
             if (Equals(filterId, rootId.Invoke(null, null)))
             {
                 return new List<Entry>();
             }
-            object context = Activator.CreateInstance(menu, Flags, null, new[] { filterId }, null);
+            object context = Activator.CreateInstance(menu, Flags, null, new[]
+            {
+filterId
+            }, null);
             MethodInfo delete = menu.GetMethod("Delete", Flags)
                                 ?? throw new MissingMethodException(menu.FullName, "Delete");
             return new List<Entry>
@@ -518,12 +562,18 @@ namespace SaintsProject.Editor
         {
             // Keep everything in GUI points, including the current scroll/group offsets and editor DPI.
             Type clip = typeof(GUI).Assembly.GetType("UnityEngine.GUIClip");
-            MethodInfo unclip = clip?.GetMethod("UnclipToWindow", Flags, null, new[] { typeof(Vector2) }, null);
+            MethodInfo unclip = clip?.GetMethod("UnclipToWindow", Flags, null, new[]
+            {
+typeof(Vector2)
+            }, null);
             if (unclip == null)
             {
                 throw new MissingMethodException("GUIClip.UnclipToWindow");
             }
-            return (Vector2)unclip.Invoke(null, new object[] { guiPoint });
+            return (Vector2)unclip.Invoke(null, new object[]
+            {
+guiPoint
+            });
         }
 
         private static object Get(object target, string name)
@@ -551,12 +601,23 @@ namespace SaintsProject.Editor
             Type type = target as Type ?? target.GetType();
             foreach (MethodInfo method in type.GetMethods(Flags))
             {
-                if (method.Name != name || method.GetParameters().Length != arguments.Length) continue;
+                if (method.Name != name || method.GetParameters().Length != arguments.Length)
+                {
+                    continue;
+                }
                 ParameterInfo[] parameters = method.GetParameters();
                 bool matches = true;
                 for (int i = 0; i < arguments.Length; i++)
-                    if (arguments[i] != null && !parameters[i].ParameterType.IsInstanceOfType(arguments[i])) matches = false;
-                if (matches) return method.Invoke(target is Type ? null : target, arguments);
+                {
+                    if (arguments[i] != null && !parameters[i].ParameterType.IsInstanceOfType(arguments[i]))
+                    {
+                        matches = false;
+                    }
+                }
+                if (matches)
+                {
+                    return method.Invoke(target is Type ? null : target, arguments);
+                }
             }
             return null;
         }

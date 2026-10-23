@@ -10,12 +10,14 @@ namespace SaintsProject.Editor
     {
         private readonly string _guid;
         private AssetConfig _config;
+
         public AssetConfigPopup(string guid)
         {
             _guid = guid;
         }
 
         public override Vector2 GetWindowSize() => new Vector2(200, 200);
+
         public override void OnGUI(Rect rect)
         {
         }
@@ -30,12 +32,12 @@ namespace SaintsProject.Editor
             root.Add(color);
             color.RegisterValueChangedCallback(evt =>
             {
-                _config.hasColor = evt.newValue.HasColor;
-                _config.color = evt.newValue.Color;
-                ProjectConfigStore.SetAsset(_config);
-                if (!evt.newValue.HasColor || !evt.newValue.IsCustomColor)
+    _config.hasColor = evt.newValue.HasColor;
+    _config.color = evt.newValue.Color;
+    ProjectConfigStore.SetAsset(_config);
+    if (!evt.newValue.HasColor || !evt.newValue.IsCustomColor)
                 {
-                    editorWindow.Close();
+        editorWindow.Close();
                 }
             });
             IconPickerElement icons = new IconPickerElement(_config.icon)
@@ -50,9 +52,9 @@ namespace SaintsProject.Editor
             root.Add(icons);
             icons.RegisterValueChangedCallback(evt =>
             {
-                _config.icon = Util.NormalizeIcon(evt.newValue);
-                ProjectConfigStore.SetAsset(_config);
-                editorWindow.Close();
+    _config.icon = Util.NormalizeIcon(evt.newValue);
+    ProjectConfigStore.SetAsset(_config);
+    editorWindow.Close();
             });
             icons.schedule.Execute(() => icons.Search.Focus());
         }

@@ -19,33 +19,48 @@ namespace SaintsProject.Editor.UIElement
         }
 
         internal ProjectContextMenuRow(string label, string shortcut, bool isChecked, bool enabled,
-            Texture2D prefixIcon = null, string prefixText = null) : this(false)
+            Texture2D prefixIcon, string prefixText) : this(false)
         {
+            VisualElement iconContainer = this.Q<VisualElement>("icon");
+            Label iconText = iconContainer.Q<Label>("iconText");
+            Image iconImage = iconContainer.Q<Image>("iconImage");
+            Image iconChecked = iconContainer.Q<Image>("iconChecked");
+            if (!string.IsNullOrEmpty(prefixText))
+            {
+                iconText.text = prefixText;
+                iconText.style.display = DisplayStyle.Flex;
+
+                iconImage.style.display = DisplayStyle.None;
+
+                iconChecked.style.display = isChecked ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            else if (prefixIcon != null)
+            {
+                iconText.style.display = DisplayStyle.None;
+
+                iconImage.image = prefixIcon;
+                iconImage.style.display = DisplayStyle.Flex;
+
+                iconChecked.style.display = isChecked ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            else if (isChecked)
+            {
+                iconText.style.display = DisplayStyle.None;
+
+                iconImage.image = Util.LoadResource<Texture2D>("check");
+                iconImage.tintColor = new Color(50 / 255f, 205 / 255f, 50 / 255f);
+                iconImage.style.display = DisplayStyle.Flex;
+
+                iconChecked.style.display = DisplayStyle.None;
+            }
+            else
+            {
+                iconText.style.display = iconText.style.display = iconChecked.style.display = DisplayStyle.None;
+            }
             Label labelElement = this.Q<Label>("label");
             labelElement.text = label;
-            VisualElement prefix = null;
-            if (prefixIcon)
-            {
-                prefix = new Image
-                {
-                    image = prefixIcon,
-                    scaleMode = ScaleMode.ScaleToFit,
-                    style = { width = 16, height = 16 },
-                };
-            }
-            else if (!string.IsNullOrEmpty(prefixText))
-            {
-                prefix = new Label(prefixText);
-            }
-            if (prefix != null)
-            {
-                prefix.pickingMode = PickingMode.Ignore;
-                prefix.style.flexShrink = 0;
-                prefix.style.marginRight = 4;
-                labelElement.parent.Insert(labelElement.parent.IndexOf(labelElement), prefix);
-            }
+
             this.Q<Label>("shortcut").text = shortcut;
-            this.Q<Label>("check").text = isChecked ? "✓" : "";
             SetEnabled(enabled);
         }
 

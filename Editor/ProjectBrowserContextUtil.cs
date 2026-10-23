@@ -40,14 +40,12 @@ namespace SaintsProject.Editor
                 _getHotkey = (Func<string, string>)typeof(Menu).GetMethod("GetHotkey", Flags)!.CreateDelegate(typeof(Func<string, string>));
                 _getMenuItemsInit = true;
             }
-
             Array items = _getItems("Assets", true, false);
             Array localized = _getItems("Assets", true, true);
             if (items == null || localized == null || items.Length != localized.Length)
             {
                 throw new InvalidOperationException("Menu metadata changed during enumeration.");
             }
-
             for (int i = 0; i < items.Length; i++)
             {
                 object item = items.GetValue(i);

@@ -14,45 +14,88 @@ namespace SaintsProject.Editor.Config
         }
 
         [field: SerializeField]
-        public bool Disabled { get; set; }
-
-        [field: SerializeField] public bool BackgroundStrip { get; set; } = true;
-
-        [field: SerializeField]
-        public bool MinimalMode { get; set; }
+        public bool Disabled
+        {
+            get; set;
+        }
 
         [field: SerializeField]
-        public bool IndentGuides { get; set; } = true;
+        public bool BackgroundStrip
+        {
+            get; set;
+        } = true;
 
         [field: SerializeField]
-        public bool AutoIcons { get; set; } = true;
+        public bool MinimalMode
+        {
+            get; set;
+        }
 
         [field: SerializeField]
-        public bool ContentMinimap { get; set; } = true;
+        public bool IndentGuides
+        {
+            get; set;
+        } = true;
 
         [field: SerializeField]
-        public bool ReplaceContextMenu { get; set; } = true;
+        public bool AutoIcons
+        {
+            get; set;
+        } = true;
 
         [field: SerializeField]
-        public bool DisableFavorites { get; set; }
+        public bool ContentMinimap
+        {
+            get; set;
+        } = true;
 
         [field: SerializeField]
-        public bool FavoriteClickToInspect { get; set; } = true;
+        public bool ReplaceContextMenu
+        {
+            get; set;
+        } = true;
 
         [field: SerializeField]
-        public bool SaveFavoritesToProjectConfig { get; set; }
+        public bool DisableFavorites
+        {
+            get; set;
+        }
 
         [field: SerializeField]
-        public List<AssetConfig> Assets { get; private set; } = new List<AssetConfig>();
+        public bool FavoriteClickToInspect
+        {
+            get; set;
+        } = true;
 
         [field: SerializeField]
-        public List<AssetFavorite> Favorites { get; private set; } = new List<AssetFavorite>();
+        public bool SaveFavoritesToProjectConfig
+        {
+            get; set;
+        }
 
         [field: SerializeField]
-        public List<ContextPathOverride> ContextPathOverrides { get; private set; } = new List<ContextPathOverride>();
+        public List<AssetConfig> Assets
+        {
+            get; private set;
+        } = new List<AssetConfig>();
 
         [field: SerializeField]
-        public List<ContextCustomGroup> ContextCustomGroups { get; private set; } = new List<ContextCustomGroup>();
+        public List<AssetFavorite> Favorites
+        {
+            get; private set;
+        } = new List<AssetFavorite>();
+
+        [field: SerializeField]
+        public List<ContextPathOverride> ContextPathOverrides
+        {
+            get; private set;
+        } = new List<ContextPathOverride>();
+
+        [field: SerializeField]
+        public List<ContextCustomGroup> ContextCustomGroups
+        {
+            get; private set;
+        } = new List<ContextCustomGroup>();
 
         public void SaveToDisk() => Save(true);
     }

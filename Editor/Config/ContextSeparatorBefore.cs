@@ -6,7 +6,9 @@ namespace SaintsProject.Editor.Config
     public enum ContextSeparatorBefore
     {
         Default,
+
         Show,
+
         Hide,
     }
 }

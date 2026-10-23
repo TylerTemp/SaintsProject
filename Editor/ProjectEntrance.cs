@@ -21,6 +21,7 @@ namespace SaintsProject.Editor
     {
         private static readonly HashSet<(ObjectId, Rect)> Drawn = new HashSet<(ObjectId, Rect)>();
         private static readonly Dictionary<(Type, string), MemberInfo> Members = new Dictionary<(Type, string), MemberInfo>();
+
         static ProjectEntrance()
         {
 #if UNITY_6000_4_OR_NEWER
@@ -37,6 +38,7 @@ namespace SaintsProject.Editor
 
         // Unity 6000.6 can dispatch the same item twice during one browser draw.
         internal static void BeginGUI() => Drawn.Clear();
+
 #if !UNITY_2022_1_OR_NEWER
         private static void OnGuidGUI(string guid, Rect rect)
         {
@@ -55,12 +57,10 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             if (ProjectWindow.Current && !Drawn.Add((id, rect)))
             {
                 return;
             }
-
 #pragma warning disable CS0618 // Unity 6000.3 still delivers int IDs through this callback.
 
             string path = AssetDatabase.GetAssetPath(id);
@@ -69,7 +69,6 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             Event evt = Event.current;
             if (evt.type == EventType.MouseDown && evt.button == 0 && evt.alt && rect.Contains(evt.mousePosition))
             {
@@ -77,12 +76,10 @@ namespace SaintsProject.Editor
                 evt.Use();
                 return;
             }
-
             if (evt.type != EventType.Repaint)
             {
                 return;
             }
-
             AssetConfig appearance = ProjectConfigStore.Resolve(path);
             bool grid = rect.height > 20;
             bool folder = AssetDatabase.IsValidFolder(path);
@@ -97,18 +94,16 @@ namespace SaintsProject.Editor
             {
                 object tree = Member(window, "m_FolderTree");
                 object state = Member(tree, "state");
-                if (Member(state, "selectedIDs")is IList selectedIds)
+                if (Member(state, "selectedIDs") is IList selectedIds)
                 {
                     selected = selectedIds.Contains(id);
                 }
             }
-
             // Leave Unity's rename field and its icon untouched.
             if (selected && EditorGUIUtility.editingTextField)
             {
                 return;
             }
-
             FolderContents.Summary contents = folder && (config.AutoIcons || config.ContentMinimap)
                 ? FolderContents.Get(path)
                 : null;
@@ -125,7 +120,6 @@ namespace SaintsProject.Editor
             {
                 corner = Util.LoadResource<Texture2D>(appearance.icon);
             }
-
             bool minimal = folder && !list && !grid && config.MinimalMode && corner;
             bool focused = window ? window.hasFocus : EditorWindow.focusedWindow && EditorWindow.focusedWindow.GetType().Name == "ProjectBrowser";
             float gray;
@@ -147,7 +141,6 @@ namespace SaintsProject.Editor
             {
                 background = Color.Lerp(background, Color.white, EditorGUIUtility.isProSkin ? .04f : .1f);
             }
-
             Rect iconRect = grid ? new Rect(rect.x, rect.y, rect.width, Mathf.Min(rect.width, rect.height - 14)) : new Rect(rect.x + (list ? 3 : 0), rect.y + (rect.height - 16) / 2, 16, 16);
             if (folder)
             {
@@ -157,7 +150,6 @@ namespace SaintsProject.Editor
                     Texture main = minimal ? corner : Util.GetIcon("Folder On Icon") ?? AssetDatabase.GetCachedIcon(path);
                     DrawIcon(iconRect, main, appearance.hasColor ? appearance.color : Color.white);
                 }
-
                 // In the right pane the folder remains the main icon, even in Minimal Mode.
                 if (corner && !minimal)
                 {
@@ -174,7 +166,6 @@ namespace SaintsProject.Editor
                 EditorGUI.DrawRect(iconRect, background);
                 DrawIcon(iconRect, corner, Color.white);
             }
-
             if (!grid)
             {
                 if (appearance.hasColor && !selected)
@@ -184,19 +175,16 @@ namespace SaintsProject.Editor
                     EditorGUI.DrawRect(rect, tint);
                     EditorGUI.DrawRect(new Rect(rect.xMax - 3, rect.y, 3, rect.height), appearance.color);
                 }
-
                 if (config.ContentMinimap && contents != null)
                 {
                     DrawMinimap(rect, iconRect.xMax + 2, Path.GetFileName(path), contents);
                 }
-
                 if (config.BackgroundStrip && ((int)(rect.y / 16) & 1) == 0)
                 {
                     // Overlay the entire row, including the foldout gutter; never erase native controls.
                     EditorGUI.DrawRect(FullRowRect(rect), EditorGUIUtility.isProSkin ? new Color(1, 1, 1, .033f) : new Color(0, 0, 0, .05f));
                 }
             }
-
             if (config.IndentGuides && !grid && !list)
             {
                 DrawIndentGuides(rect, id, window, twoColumns, foldable);
@@ -215,14 +203,12 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             object tree = Member(window, twoColumns ? "m_FolderTree" : "m_AssetTree");
             object node = InvokeMethod(tree, "FindItem", id);
             if (node == null)
             {
                 return;
             }
-
             for (int level = 0; level < depth; level++)
             {
                 object parent = Member(node, "parent");
@@ -230,7 +216,6 @@ namespace SaintsProject.Editor
                 {
                     break;
                 }
-
                 float x = rect.x - IndentStep / 2f - level * IndentStep - 0.5f;
                 Color color = GuideColor(parent);
                 bool hasNext = HasNextSibling(node);
@@ -246,7 +231,6 @@ namespace SaintsProject.Editor
                     {
                         DrawGuideLine(rect, x, color, foldable, rect.height / 2f);
                     }
-
                     float horizontalLength = foldable ? rect.x - 6f - x : IndentStep / 2f + 1f;
                     EditorGUI.DrawRect(new Rect(x, rect.y + rect.height / 2f - 0.5f, horizontalLength, 1), color);
                 }
@@ -254,7 +238,6 @@ namespace SaintsProject.Editor
                 {
                     EditorGUI.DrawRect(new Rect(x, rect.y, 1, rect.height), color);
                 }
-
                 node = parent;
             }
         }
@@ -266,7 +249,6 @@ namespace SaintsProject.Editor
                 EditorGUI.DrawRect(new Rect(x, rect.y, 1, lineHeight), color);
                 return;
             }
-
             const float foldoutIconSize = 12f;
             float iconTop = rect.y + (rect.height - foldoutIconSize) / 2f;
             float iconBottom = iconTop + foldoutIconSize;
@@ -282,17 +264,16 @@ namespace SaintsProject.Editor
             {
                 return false;
             }
-
             if (Member(parent, "children") is not IList children)
             {
                 return false;
             }
-
             int index = children.IndexOf(node);
             return index >= 0 && index < children.Count - 1;
         }
 
         private static readonly Color DefaultGuideColor = new Color(0.4f, 0.4f, 0.4f);
+
         private static Color GuideColor(object treeItem)
         {
             object idObj = Member(treeItem, "id");
@@ -300,13 +281,11 @@ namespace SaintsProject.Editor
             {
                 return DefaultGuideColor;
             }
-
             string path = AssetDatabase.GetAssetPath((ObjectId)ConvertArg(idObj, typeof(ObjectId)));
             if (string.IsNullOrEmpty(path))
             {
                 return DefaultGuideColor;
             }
-
             AssetConfig appearance = ProjectConfigStore.Resolve(path);
             return appearance.hasColor ? appearance.color : DefaultGuideColor;
         }
@@ -317,7 +296,6 @@ namespace SaintsProject.Editor
             {
                 return null;
             }
-
             Type type = target.GetType();
             (Type type, string name) key = (type, name);
             if (!Methods.TryGetValue(key, out MethodInfo method))
@@ -331,18 +309,18 @@ namespace SaintsProject.Editor
                         break;
                     }
                 }
-
                 Methods[key] = method;
             }
-
             if (method == null)
             {
                 return null;
             }
-
             Type paramType = method.GetParameters()[0].ParameterType;
             object converted = ConvertArg(arg, paramType);
-            return method.Invoke(target, new[] { converted });
+            return method.Invoke(target, new[]
+            {
+converted
+            });
         }
 
         // Different Unity versions can back the same native id parameter with different value
@@ -350,20 +328,24 @@ namespace SaintsProject.Editor
         // compile time and can therefore disagree with what the native method actually wants
         // at runtime. Bridge the gap generically instead of hard-coding a single version cutoff.
         private static readonly Dictionary<(Type, Type), MethodInfo> Converters = new Dictionary<(Type, Type), MethodInfo>();
+
         private static object ConvertArg(object arg, Type paramType)
         {
             if (arg == null || paramType.IsInstanceOfType(arg))
             {
                 return arg;
             }
-
             Type argType = arg.GetType();
             (Type argType, Type paramType) key = (argType, paramType);
             if (!Converters.TryGetValue(key, out MethodInfo converter))
             {
                 const BindingFlags flags = BindingFlags.Static | BindingFlags.Public;
                 // Prefer an implicit/explicit conversion operator declared on either side.
-                foreach (Type owner in new[] { paramType, argType })
+                foreach (Type owner in new[]
+                {
+paramType,
+argType
+                })
                 {
                     foreach (MethodInfo candidate in owner.GetMethods(flags))
                     {
@@ -372,7 +354,6 @@ namespace SaintsProject.Editor
                         {
                             continue;
                         }
-
                         ParameterInfo[] parameters = candidate.GetParameters();
                         if (parameters.Length == 1 && parameters[0].ParameterType == argType)
                         {
@@ -380,27 +361,31 @@ namespace SaintsProject.Editor
                             break;
                         }
                     }
-
                     if (converter != null)
                     {
                         break;
                     }
                 }
-
                 Converters[key] = converter;
             }
-
             if (converter != null)
             {
-                return converter.Invoke(null, new[] { arg });
+                return converter.Invoke(null, new[]
+                {
+arg
+                });
             }
-
-            ConstructorInfo ctor = paramType.GetConstructor(new[] { argType });
+            ConstructorInfo ctor = paramType.GetConstructor(new[]
+            {
+argType
+            });
             if (ctor != null)
             {
-                return ctor.Invoke(new[] { arg });
+                return ctor.Invoke(new[]
+                {
+arg
+                });
             }
-
             try
             {
                 return Convert.ChangeType(arg, paramType);
@@ -426,7 +411,6 @@ namespace SaintsProject.Editor
             {
                 return;
             }
-
             Color old = GUI.color;
             try
             {
@@ -463,7 +447,6 @@ namespace SaintsProject.Editor
             {
                 return null;
             }
-
             Type type = target.GetType();
             (Type type, string name) key = (type, name);
             if (!Members.TryGetValue(key, out MemberInfo member))
@@ -472,12 +455,10 @@ namespace SaintsProject.Editor
                 member = (MemberInfo)type.GetField(name, flags) ?? type.GetProperty(name, flags);
                 Members[key] = member;
             }
-
             if (member is FieldInfo field)
             {
                 return field.GetValue(target);
             }
-
             return (member as PropertyInfo)?.GetValue(target);
         }
 
@@ -493,6 +474,7 @@ namespace SaintsProject.Editor
         [MenuItem("Assets/Saints Project/Edit Appearance", true)]
         [MenuItem("Assets/Saints Project/Add Favorite", true)]
         private static bool HasSelection() => Selection.activeObject && EditorUtility.IsPersistent(Selection.activeObject);
+
         [MenuItem("Assets/Saints Project/Add Favorite", false, 2001)]
         private static void FavoriteSelection()
         {

@@ -35,7 +35,10 @@ namespace SaintsProject.Editor
             int order = 0;
             foreach (ProjectBrowserContextUtil.MenuItem item in source)
             {
-                if (string.IsNullOrEmpty(item.Path)) continue;
+                if (string.IsNullOrEmpty(item.Path))
+                {
+                    continue;
+                }
                 // Unity uses isSeparator for both group declarations and boundaries
                 // inside an already-declared group.
                 if (item.IsSeparator && tree.ById.TryGetValue(item.Path, out ContextMenuNode branch)
@@ -44,12 +47,18 @@ namespace SaintsProject.Editor
                     pendingSeparators.Add(branch.Id);
                     continue;
                 }
-                if (!item.Path.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+                if (!item.Path.StartsWith("Assets/", StringComparison.Ordinal))
+                {
+                    continue;
+                }
                 ContextMenuNode parent = EnsureSourceGroup(
-                    item.Path.Substring(0, item.Path.LastIndexOf('/')), tree, pendingSeparators, ref order);
-                if (tree.ById.ContainsKey(item.Path)) continue;
+                                    item.Path.Substring(0, item.Path.LastIndexOf('/')), tree, pendingSeparators, ref order);
+                if (tree.ById.ContainsKey(item.Path))
+                {
+                    continue;
+                }
                 ContextMenuNode node = new ContextMenuNode(item.Path,
-                    item.IsSeparator ? ContextMenuNodeKind.Group : ContextMenuNodeKind.Command, item.Path)
+                                    item.IsSeparator ? ContextMenuNodeKind.Group : ContextMenuNodeKind.Command, item.Path)
                 {
                     OriginalPriority = item.Priority,
                     OriginalLabel = item.Label,
@@ -62,9 +71,12 @@ namespace SaintsProject.Editor
         private static ContextMenuNode EnsureSourceGroup(string path, ContextMenuTree tree,
             HashSet<string> pendingSeparators, ref int order)
         {
-            if (tree.ById.TryGetValue(path, out ContextMenuNode found)) return found;
+            if (tree.ById.TryGetValue(path, out ContextMenuNode found))
+            {
+                return found;
+            }
             ContextMenuNode parent = EnsureSourceGroup(path.Substring(0, path.LastIndexOf('/')),
-                tree, pendingSeparators, ref order);
+                            tree, pendingSeparators, ref order);
             ContextMenuNode group = new ContextMenuNode(path, ContextMenuNodeKind.Group, path)
             {
                 OriginalLabel = path.Substring(path.LastIndexOf('/') + 1),
@@ -114,16 +126,26 @@ namespace SaintsProject.Editor
                 definitions.Add(group.id, group);
                 orders.Add(group.id, order++);
             }
-
             HashSet<string> visiting = new HashSet<string>(StringComparer.Ordinal);
             HashSet<string> failed = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in definitions.Keys) EnsureCustomGroup(id);
-
+            foreach (string id in definitions.Keys)
+            {
+                EnsureCustomGroup(id);
+            }
             ContextMenuNode EnsureCustomGroup(string id)
             {
-                if (tree.ById.TryGetValue(id, out ContextMenuNode existing)) return existing;
-                if (failed.Contains(id)) return null;
-                if (!definitions.TryGetValue(id, out ContextCustomGroup definition)) return null;
+                if (tree.ById.TryGetValue(id, out ContextMenuNode existing))
+                {
+                    return existing;
+                }
+                if (failed.Contains(id))
+                {
+                    return null;
+                }
+                if (!definitions.TryGetValue(id, out ContextCustomGroup definition))
+                {
+                    return null;
+                }
                 if (!visiting.Add(id))
                 {
                     Report(tree, id, "Custom group parent cycle.");
@@ -171,14 +193,19 @@ namespace SaintsProject.Editor
                     Report(tree, config.targetId, "Override target is missing or is the menu root.");
                     continue;
                 }
-                if (indexed.ContainsKey(config.targetId)) Report(tree, config.targetId, "Duplicate override; the last record is used.");
+                if (indexed.ContainsKey(config.targetId))
+                {
+                    Report(tree, config.targetId, "Duplicate override; the last record is used.");
+                }
                 indexed[config.targetId] = config;
             }
-
             HashSet<ContextMenuNode> placements = new HashSet<ContextMenuNode>();
             foreach (ContextMenuNode node in tree.ById.Values)
             {
-                if (!indexed.TryGetValue(node.Id, out ContextPathOverride config)) continue;
+                if (!indexed.TryGetValue(node.Id, out ContextPathOverride config))
+                {
+                    continue;
+                }
                 node.AppliedOverride = config;
                 node.HiddenSelf = config.hidden;
                 node.Priority = config.overridePriority ? config.priority : node.OriginalPriority;
@@ -189,7 +216,10 @@ namespace SaintsProject.Editor
                     TextureObject = config.prefixTextureObject,
                     Text = config.prefixText,
                 };
-                if (!config.HasPlacementOverride) continue;
+                if (!config.HasPlacementOverride)
+                {
+                    continue;
+                }
                 ContextMenuNode parent = node.Parent;
                 if (config.overrideParent && (string.IsNullOrEmpty(config.parentId)
                     || !tree.ById.TryGetValue(config.parentId, out parent) || parent.Kind == ContextMenuNodeKind.Command))
@@ -205,10 +235,12 @@ namespace SaintsProject.Editor
                 }
                 node.Parent = parent;
                 node.Name = name;
-                if (!string.IsNullOrEmpty(config.newName)) node.Label = name;
+                if (!string.IsNullOrEmpty(config.newName))
+                {
+                    node.Label = name;
+                }
                 placements.Add(node);
             }
-
             // Validate the complete proposed hierarchy, not the order of config records.
             // Rolling back a placement can reveal another conflict, so repeat until stable.
             bool changed;
@@ -224,10 +256,16 @@ namespace SaintsProject.Editor
                         chain.Add(cursor);
                         cursor = cursor.Parent;
                     }
-                    if (cursor == null) continue;
+                    if (cursor == null)
+                    {
+                        continue;
+                    }
                     foreach (ContextMenuNode member in chain.Skip(chain.IndexOf(cursor)))
                     {
-                        if (!placements.Remove(member)) continue;
+                        if (!placements.Remove(member))
+                        {
+                            continue;
+                        }
                         RestorePlacement(member, tree);
                         Report(tree, member.Id, "Placement cycle; original location retained.");
                         changed = true;
@@ -239,7 +277,10 @@ namespace SaintsProject.Editor
                 {
                     foreach (ContextMenuNode node in collision)
                     {
-                        if (!placements.Remove(node)) continue;
+                        if (!placements.Remove(node))
+                        {
+                            continue;
+                        }
                         RestorePlacement(node, tree);
                         Report(tree, node.Id, "Destination is already occupied; original location retained.");
                         changed = true;
@@ -247,10 +288,16 @@ namespace SaintsProject.Editor
                 }
             } while (changed);
 
-            foreach (ContextMenuNode node in tree.ById.Values) node.Children.Clear();
             foreach (ContextMenuNode node in tree.ById.Values)
             {
-                if (node.Parent != null) node.Parent.Children.Add(node);
+                node.Children.Clear();
+            }
+            foreach (ContextMenuNode node in tree.ById.Values)
+            {
+                if (node.Parent != null)
+                {
+                    node.Parent.Children.Add(node);
+                }
             }
         }
 
@@ -259,7 +306,10 @@ namespace SaintsProject.Editor
             for (ContextMenuNode cursor = destination; cursor != null;
                  cursor = cursor.OriginalParentId == null ? null : tree.ById[cursor.OriginalParentId])
             {
-                if (cursor == node) return true;
+                if (cursor == node)
+                {
+                    return true;
+                }
             }
             return false;
         }
@@ -278,13 +328,15 @@ namespace SaintsProject.Editor
 
             bool HiddenByOriginalAncestry(ContextMenuNode node)
             {
-                if (originalHidden.TryGetValue(node.Id, out bool hidden)) return hidden;
+                if (originalHidden.TryGetValue(node.Id, out bool hidden))
+                {
+                    return hidden;
+                }
                 hidden = node.HiddenSelf || node.OriginalParentId != null
-                    && HiddenByOriginalAncestry(tree.ById[node.OriginalParentId]);
+                                    && HiddenByOriginalAncestry(tree.ById[node.OriginalParentId]);
                 originalHidden.Add(node.Id, hidden);
                 return hidden;
             }
-
             void Visit(ContextMenuNode node, bool destinationHidden)
             {
                 node.DisplayPath = node.Parent == null ? node.Name : node.Parent.DisplayPath + "/" + node.Name;
@@ -297,8 +349,8 @@ namespace SaintsProject.Editor
                         || config.overrideParent && child.Parent.Id != child.OriginalParentId));
                 node.Children.Sort((a, b) =>
                 {
-                    int priority = sortByPriority ? a.Priority.CompareTo(b.Priority) : 0;
-                    return priority != 0 ? priority : a.SourceOrder.CompareTo(b.SourceOrder);
+    int priority = sortByPriority ? a.Priority.CompareTo(b.Priority) : 0;
+    return priority != 0 ? priority : a.SourceOrder.CompareTo(b.SourceOrder);
                 });
 
                 ContextMenuNode previous = null;
@@ -307,10 +359,16 @@ namespace SaintsProject.Editor
                 {
                     Visit(child, node.HiddenInHierarchy);
                     pendingExplicit |= child.ExplicitSeparatorBefore;
-                    if (!child.IsVisible) continue;
+                    if (!child.IsVisible)
+                    {
+                        continue;
+                    }
                     bool separator = pendingExplicit || previous != null && (long)child.Priority - previous.Priority > 10;
                     ContextSeparatorBefore setting = child.AppliedOverride?.separatorBefore ?? ContextSeparatorBefore.Default;
-                    if (setting != ContextSeparatorBefore.Default) separator = setting == ContextSeparatorBefore.Show;
+                    if (setting != ContextSeparatorBefore.Default)
+                    {
+                        separator = setting == ContextSeparatorBefore.Show;
+                    }
                     child.SeparatorBefore = previous != null && separator;
                     pendingExplicit = false;
                     previous = child;

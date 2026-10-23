@@ -9,18 +9,22 @@ namespace SaintsProject.Editor.Config
     {
         private IConfig _target;
         private bool _refreshing;
+
         // [MenuItem("Window/Saints/Project/Config")]
         public static void Open() => GetWindow<ConfigEditWindow>("Saints Project Config");
+
         private void OnEnable() => ProjectConfigStore.Changed += Refresh;
+
         private void OnDisable() => ProjectConfigStore.Changed -= Refresh;
+
         public void CreateGUI() => Refresh();
+
         private void Refresh()
         {
             if (_refreshing)
             {
                 return;
             }
-
             _refreshing = true;
             try
             {
