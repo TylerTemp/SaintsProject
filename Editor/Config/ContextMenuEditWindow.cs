@@ -169,7 +169,13 @@ namespace SaintsProject.Editor.Config
             {
                 if (_resolved.ById.ContainsKey(id))
                 {
-                    _tree.ExpandItem(ItemId(id), false, false);
+
+                    _tree.ExpandItem(ItemId(id), false
+#if UNITY_6000_0_OR_NEWER
+                        , false
+#endif
+                    );
+
                 }
             }
             if (string.IsNullOrEmpty(_selectedId) || !_resolved.ById.TryGetValue(_selectedId, out ContextMenuNode selected) || selected.Kind == ContextMenuNodeKind.Root)
@@ -179,7 +185,11 @@ namespace SaintsProject.Editor.Config
             }
             for (ContextMenuNode parent = selected?.Parent; parent != null && parent.Kind != ContextMenuNodeKind.Root; parent = parent.Parent)
             {
-                _tree.ExpandItem(ItemId(parent.Id), false, false);
+                _tree.ExpandItem(ItemId(parent.Id), false
+#if UNITY_6000_0_OR_NEWER
+                    , false
+#endif
+                );
             }
             _tree.Rebuild();
             if (selected != null)

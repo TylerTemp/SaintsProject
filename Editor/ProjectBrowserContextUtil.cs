@@ -37,7 +37,8 @@ namespace SaintsProject.Editor
             {
                 _getItems = (Func<string, bool, bool, Array>)typeof(Menu).GetMethod("GetMenuItems", Flags)!.CreateDelegate(typeof(Func<string, bool, bool, Array>));
 
-                _getHotkey = (Func<string, string>)typeof(Menu).GetMethod("GetHotkey", Flags)!.CreateDelegate(typeof(Func<string, string>));
+                // Older Unity versions do not expose Menu.GetHotkey.
+                _getHotkey = (Func<string, string>)typeof(Menu).GetMethod("GetHotkey", Flags)?.CreateDelegate(typeof(Func<string, string>));
                 _getMenuItemsInit = true;
             }
             Array items = _getItems("Assets", true, false);
