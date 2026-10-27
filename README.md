@@ -91,6 +91,8 @@ The search can give the sub items
 
     Go to the [Release Page](https://github.com/TylerTemp/SaintsProject/releases) to download a desired version of `unitypackage` and import it to your project
 
+*   Using [Unity Asset Store](https://u3d.as/4cu1)(NOT RECOMMENDED)
+
 ## Change Log ##
 
 Add support for custom right click menu of:
