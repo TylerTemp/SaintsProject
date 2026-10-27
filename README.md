@@ -90,3 +90,14 @@ The search can give the sub items
 *   Using a `unitypackage` (NOT RECOMMENDED):
 
     Go to the [Release Page](https://github.com/TylerTemp/SaintsProject/releases) to download a desired version of `unitypackage` and import it to your project
+
+## Change Log ##
+
+Add support for custom right click menu of:
+
+1.  Hide menu you don't want
+2.  Move menu into another submenu, even a submenu you created
+3.  Rename menu name, custom icons
+4.  Provide default icons for menu
+
+[Full changelog](CHANGELOG.md)
