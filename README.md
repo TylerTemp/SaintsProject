@@ -95,11 +95,6 @@ The search can give the sub items
 
 ## Change Log ##
 
-Add support for custom right click menu of:
-
-1.  Hide menu you don't want
-2.  Move menu into another submenu, even a submenu you created
-3.  Rename menu name, custom icons
-4.  Provide default icons for menu
+Fix: improved the navigation when search.
 
 [Full changelog](CHANGELOG.md)
