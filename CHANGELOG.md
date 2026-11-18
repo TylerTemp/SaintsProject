@@ -1,3 +1,7 @@
+## 1.2.1 ##
+
+Fix: improved the navigation when search.
+
 ## 1.2.0 ##
 
 Add support for custom right click menu of:
